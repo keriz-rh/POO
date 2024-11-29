@@ -1,8 +1,6 @@
 package com.example.application.views.formProfesor;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import com.example.application.controlador.ProfesorController;
-import com.example.application.modelo.Clase;
 import com.example.application.modelo.Profesor2;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Composite;
@@ -11,6 +9,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -19,16 +18,17 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouteAlias;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
-import com.vaadin.flow.component.grid.Grid;
 
 @PageTitle("Educantrol - Profesores")
 @Route(value = "profesor-form", layout = MainLayout.class)
+@RouteAlias(value = "", layout = MainLayout.class)
 public class ProfesorFormView extends Composite<VerticalLayout> {
     
     private final ProfesorController controller;
