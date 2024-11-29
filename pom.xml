@@ -191,6 +191,16 @@
                             <enableAssertions>true</enableAssertions>
                         </configuration>
                     </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <parameters>true</parameters>  <!-- Esto es importante -->
+                        </configuration>
+                </plugin>
+                    
                 </plugins>
             </build>
         </profile>

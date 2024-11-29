@@ -1,45 +1,50 @@
-# MibellaApp
+#EDUCANTROL
 
-This project can be used as a starting point to create your own Vaadin application with Spring Boot.
-It contains all the necessary configuration and some placeholder files to get you started.
+#Descripción
 
-## Running the application
+#EduCantrol es un sistema de gestión educativa diseñado para optimizar la administración de un centro educativo. Con EduCantrol se permite gestionar estudiantes, profesores, asignaturas, períodos académicos y horarios, facilitando la creación de expedientes académicos, los pagos y la programación de clases y materias. Está desarrollado utilizando Vaadin para la interfaz de usuario, junto con Spring Boot, JPA y Maven en el backend y la persistencia de datos.
 
-The project is a standard Maven project. To run it from the command line,
-type `mvnw` (Windows), or `./mvnw` (Mac & Linux), then open
-http://localhost:8080 in your browser.
+#Características
 
-You can also import the project to your IDE of choice as you would with any
-Maven project. Read more on [how to import Vaadin projects to different IDEs](https://vaadin.com/docs/latest/guide/step-by-step/importing) (Eclipse, IntelliJ IDEA, NetBeans, and VS Code).
+Gestión de Estudiantes: Registro de estudiantes con datos personales y pagos realizados.
+Gestión de Profesores: Administración del personal docente y sus asignaturas y periodos asignados.
+Materias y Periodos: Control de materias por período académico.
+Gestión de Horarios: Asignación de horarios para clases, incluyendo la materia, el profesor y el periodo en que se da la materia.
 
-## Deploying to Production
+#Tecnologías Utilizadas
 
-To create a production build, call `mvnw clean package -Pproduction` (Windows),
-or `./mvnw clean package -Pproduction` (Mac & Linux).
-This will build a JAR file with all the dependencies and front-end resources,
-ready to be deployed. The file can be found in the `target` folder after the build completes.
+Frontend: Vaadin
+Backend: Spring Boot
+Persistencia: JPA 
+Gestión de Dependencias: Maven
+Base de Datos: MariaDB
 
-Once the JAR file is built, you can run it using
-`java -jar target/my-app-1.0-SNAPSHOT.jar`
+#Instalación
 
-## Project structure
+Requisitos Previos
+JDK 11 o superior
+Maven instalado
+MariaDB
+IDE (NetBeans, IntelliJ, Eclipse)
 
-- `MainLayout.java` in `src/main/java` contains the navigation setup (i.e., the
-  side/top bar and the main menu). This setup uses
-  [App Layout](https://vaadin.com/docs/components/app-layout).
-- `views` package in `src/main/java` contains the server-side Java views of your application.
-- `views` folder in `src/main/frontend` contains the client-side JavaScript views of your application.
-- `themes` folder in `src/main/frontend` contains the custom CSS styles.
+#Uso
 
-## Useful links
+Pantallas de Mantenimiento. EduCantrol cuenta con diferentes pantallas de mantenimiento para administrar cada entidad.
+Persona: clase principal para registrar, editar la información y dar de baja, de ella se derivan las clases Profesor y Estudiante.
+Materia: Gestión de materias, incluyendo nombre y poder eliminarla
+Periodo: Para definir los periodos de clases disponibles.
+Horario: Asignar horarios a las materias de acuerdo con el período, día, y profesor.
+Pago: Para realizar procesos de pago tanto de estudiantes como de profesores
+Clase: permite crear, editar y eliminar las clases.
+Expediente Academico: Permite la elaboración de un expediente académico así como de su actualización.
+Evaluación: Registra las evaluaciones, las edita o elimina para posteriormente manipularlas en el Expediente Academico
 
-- Read the documentation at [vaadin.com/docs](https://vaadin.com/docs).
-- Follow the tutorial at [vaadin.com/docs/latest/tutorial/overview](https://vaadin.com/docs/latest/tutorial/overview).
-- Create new projects at [start.vaadin.com](https://start.vaadin.com/).
-- Search UI components and their usage examples at [vaadin.com/docs/latest/components](https://vaadin.com/docs/latest/components).
-- View use case applications that demonstrate Vaadin capabilities at [vaadin.com/examples-and-demos](https://vaadin.com/examples-and-demos).
-- Build any UI without custom CSS by discovering Vaadin's set of [CSS utility classes](https://vaadin.com/docs/styling/lumo/utility-classes). 
-- Find a collection of solutions to common use cases at [cookbook.vaadin.com](https://cookbook.vaadin.com/).
-- Find add-ons at [vaadin.com/directory](https://vaadin.com/directory).
-- Ask questions on [Stack Overflow](https://stackoverflow.com/questions/tagged/vaadin) or join our [Discord channel](https://discord.gg/MYFq5RTbBn).
-- Report issues, create pull requests in [GitHub](https://github.com/vaadin).
+#Estructura del Proyecto
+
+src/main/java: Contiene los paquetes de entidades, controladores, servicios y repositorios.
+src/main/resources: Incluye el archivo de configuración application.properties para la base de datos y otros recursos.
+docs/: Documentación adicional, como el manual del usuario y el diagrama de arquitectura del sistema.
+
+
+
+
