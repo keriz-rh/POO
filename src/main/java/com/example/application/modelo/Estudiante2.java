@@ -26,6 +26,10 @@ public class Estudiante2 extends Persona {
     @Column(nullable = false)
     private LocalDate fechaInscripcion;
 
+    @Lob
+    @Column(name = "foto", columnDefinition="MEDIUMBLOB")
+    private byte[] foto;
+
     @OneToOne(mappedBy = "estudiante", cascade = CascadeType.ALL)
     private ExpedienteAcademico expediente;
 
@@ -79,5 +83,13 @@ public class Estudiante2 extends Persona {
 
     public void setPagos(List<Pago> pagos) {
         this.pagos = pagos;
+    }
+
+    public byte[] getFoto() {
+        return foto;
+    }
+
+    public void setFoto(byte[] foto) {
+        this.foto = foto;
     }
 }

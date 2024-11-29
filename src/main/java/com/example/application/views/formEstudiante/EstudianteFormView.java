@@ -12,6 +12,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -27,11 +28,21 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import java.io.InputStream;
+import java.io.IOException;
+import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.server.StreamResource;
+import java.io.ByteArrayInputStream;
 
 @PageTitle("Educantrol - Estudiantes")
 @Route(value = "estudiante-form", layout = MainLayout.class)
 public class EstudianteFormView extends Composite<VerticalLayout> {
     private final EstudianteController controller;
+    private final Upload fotoUpload;
+    private final MemoryBuffer fotoBuffer;
+    private byte[] fotoData;
 
     // Campos de la vista
     private final TextField nombreField = new TextField("Nombre");
@@ -54,6 +65,8 @@ public class EstudianteFormView extends Composite<VerticalLayout> {
 
     public EstudianteFormView(EstudianteController controller) {
         this.controller = controller;
+        this.fotoBuffer = new MemoryBuffer();
+        this.fotoUpload = new Upload(fotoBuffer);
         
         VerticalLayout layoutColumn2 = new VerticalLayout();
         H3 h3 = new H3();
@@ -63,6 +76,7 @@ public class EstudianteFormView extends Composite<VerticalLayout> {
         Button buttonPrimary = new Button();
         Button buttonSecondary = new Button();
         
+        configureFotoUpload();
         configureLayout(layoutColumn2, h3, formLayout2Col, layoutRow);
         configureFields();
         configureButtons(buttonPrimary, buttonSecondary);
@@ -79,6 +93,7 @@ public class EstudianteFormView extends Composite<VerticalLayout> {
         formLayout2Col.add(nombrePadreField);
         formLayout2Col.add(carnetField);
         formLayout2Col.add(fechaInscripcionField);
+        formLayout2Col.add(fotoUpload);
         
         layoutColumn2.add(layoutRow);
         layoutRow.add(buttonPrimary);
@@ -136,10 +151,59 @@ public class EstudianteFormView extends Composite<VerticalLayout> {
         cancel.setWidth("min-content");
     }
 
+        private void configureFotoUpload() {
+        fotoUpload.setAcceptedFileTypes("image/png");
+        fotoUpload.setDropLabel(new Span("Arrastra una foto PNG o haz clic para subir"));
+        fotoUpload.setMaxFiles(1);
+        fotoUpload.setMaxFileSize(5 * 1024 * 1024); // 5MB máximo
+        
+        fotoUpload.addSucceededListener(event -> {
+            try {
+                // Guardar los datos de la imagen
+                InputStream is = fotoBuffer.getInputStream();
+                fotoData = is.readAllBytes();
+                Notification.show("Foto subida correctamente");
+            } catch (IOException e) {
+                Notification.show("Error al procesar la imagen: " + e.getMessage(), 3000, Notification.Position.MIDDLE);
+            }
+        });
+
+        fotoUpload.addFailedListener(event -> {
+            Notification.show("Error al subir la imagen: " + event.getReason(), 
+                            3000, Notification.Position.MIDDLE);
+        });
+    }
+
     private void createGrid() {
-        estudiantesGrid.addColumn(Estudiante2::getId).setHeader("CÓDIGO").setSortable(true);
-        estudiantesGrid.addColumn(Estudiante2::getNombre).setHeader("Nombre").setSortable(true);
-        estudiantesGrid.addColumn(Estudiante2::getApellido).setHeader("Apellido").setSortable(true);
+        estudiantesGrid.addComponentColumn(estudiante -> {
+            if (estudiante.getFoto() != null) {
+                // Crear un StreamResource para la imagen
+                StreamResource streamResource = new StreamResource("foto.png", () -> {
+                    return new ByteArrayInputStream(estudiante.getFoto());
+                });
+                
+                // Crear el componente Image
+                Image foto = new Image(streamResource, "Foto del estudiante");
+                foto.setWidth("50px");
+                foto.setHeight("50px");
+                foto.getStyle().set("object-fit", "cover"); 
+                foto.getStyle().set("border", "1px solid #ccc"); 
+                
+                return foto;
+            } else {
+                // Si no hay foto, mostrar un placeholder
+                Image placeholder = new Image("images/placeholder-user.png", "Sin foto");
+                placeholder.setWidth("50px");
+                placeholder.setHeight("50px");
+                placeholder.getStyle().set("object-fit", "cover");
+                placeholder.getStyle().set("border", "1px solid #ccc");
+                return placeholder;
+            }
+        }).setHeader("Foto").setWidth("100px").setFlexGrow(0);
+
+        //estudiantesGrid.addColumn(Estudiante2::getId).setHeader("CÓDIGO").setSortable(true);
+        estudiantesGrid.addColumn(Estudiante2::getNombre).setHeader("Nombres").setSortable(true);
+        estudiantesGrid.addColumn(Estudiante2::getApellido).setHeader("Apellidos").setSortable(true);
         estudiantesGrid.addColumn(Estudiante2::getNivelAcademico).setHeader("Nivel Académico").setSortable(true);
         estudiantesGrid.addColumn(Estudiante2::getNombrePadre).setHeader("Nombre del Padre").setSortable(true);
         estudiantesGrid.addColumn(Estudiante2::getCarnet).setHeader("Carnet").setSortable(true);
@@ -172,6 +236,9 @@ public class EstudianteFormView extends Composite<VerticalLayout> {
         estudianteToSave.setNombrePadre(nombrePadreField.getValue());
         estudianteToSave.setCarnet(carnetField.getValue());
         estudianteToSave.setFechaInscripcion(fechaInscripcionField.getValue());
+        if (fotoData != null) {
+            estudianteToSave.setFoto(fotoData);
+        }
 
         controller.save(estudianteToSave);
 
@@ -190,6 +257,8 @@ public class EstudianteFormView extends Composite<VerticalLayout> {
         nombrePadreField.clear();
         carnetField.clear();
         fechaInscripcionField.clear();
+        fotoData = null;
+        fotoUpload.clearFileList();
     }
 
     private void refreshGrid() {
@@ -199,6 +268,36 @@ public class EstudianteFormView extends Composite<VerticalLayout> {
     private void openEditDialog(Estudiante2 estudiante) {
         Dialog dialog = new Dialog();
         FormLayout formLayout = new FormLayout();
+
+        if (estudiante.getFoto() != null) {
+            StreamResource streamResource = new StreamResource("foto.png", () -> {
+                return new ByteArrayInputStream(estudiante.getFoto());
+            });
+            Image fotoActual = new Image(streamResource, "Foto actual");
+            fotoActual.setWidth("150px");
+            fotoActual.setHeight("150px");
+            fotoActual.getStyle().set("object-fit", "cover");
+            fotoActual.getStyle().set("border", "1px solid #ccc");
+            formLayout.add(fotoActual);
+        }
+
+        // Configurar el upload para la nueva foto
+        MemoryBuffer buffer = new MemoryBuffer();
+        Upload fotoUploadEdit = new Upload(buffer);
+        fotoUploadEdit.setAcceptedFileTypes("image/png");
+        fotoUploadEdit.setDropLabel(new Span("Actualizar foto (PNG)"));
+        fotoUploadEdit.setMaxFiles(1);
+        fotoUploadEdit.setMaxFileSize(5 * 1024 * 1024); // 5MB máximo
+
+        fotoUploadEdit.addSucceededListener(event -> {
+            try {
+            InputStream is = buffer.getInputStream();
+            estudiante.setFoto(is.readAllBytes());
+            Notification.show("Foto actualizada");
+            } catch (IOException e) {
+            Notification.show("Error al procesar la imagen: " + e.getMessage());
+            }
+        });
 
         // Campos del formulario
         TextField nombreEdit = new TextField("Nombre");
@@ -222,7 +321,7 @@ public class EstudianteFormView extends Composite<VerticalLayout> {
         carnetEdit.setValue(estudiante.getCarnet());
         fechaInscripcionEdit.setValue(estudiante.getFechaInscripcion());
 
-        formLayout.add(nombreEdit, apellidoEdit, edadEdit, direccionEdit, telefonoEdit,
+        formLayout.add(fotoUploadEdit, nombreEdit, apellidoEdit, edadEdit, direccionEdit, telefonoEdit,
                        nivelAcademicoEdit, nombrePadreEdit, carnetEdit, fechaInscripcionEdit);
 
         Button saveButton = new Button("Guardar", event -> {
