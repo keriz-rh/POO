@@ -30,8 +30,6 @@ public class Estudiante2 extends Persona {
     @Column(name = "foto", columnDefinition="MEDIUMBLOB")
     private byte[] foto;
 
-    @OneToOne(mappedBy = "estudiante", cascade = CascadeType.ALL)
-    private ExpedienteAcademico expediente;
 
     @OneToMany(mappedBy = "estudiante", cascade = CascadeType.ALL)
     private List<Pago> pagos = new ArrayList<>();
@@ -69,13 +67,6 @@ public class Estudiante2 extends Persona {
         this.fechaInscripcion = fechaInscripcion;
     }
 
-    public ExpedienteAcademico getExpediente() {
-        return expediente;
-    }
-
-    public void setExpediente(ExpedienteAcademico expediente) {
-        this.expediente = expediente;
-    }
 
     public List<Pago> getPagos() {
         return pagos;

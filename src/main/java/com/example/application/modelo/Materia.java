@@ -37,8 +37,6 @@ public class Materia {
     @Column(length = 500)
     private String descripcion;
 
-    @OneToMany(mappedBy = "materia", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Clase> clases = new ArrayList<>();
     
     // Constructor vacío
     public Materia() {}
@@ -76,22 +74,13 @@ public class Materia {
         this.descripcion = descripcion;
     }
 
-    public Set<Periodo> getPeriodos() {  // Cambiado de getPeriodo a getPeriodos
+    public Set<Periodo> getPeriodos() { 
         return periodos;
     }
 
-    public void setPeriodos(Set<Periodo> periodos) {  // Cambiado de setPeriodo a setPeriodos
+    public void setPeriodos(Set<Periodo> periodos) { 
         this.periodos = periodos;
     }
-
-    public List<Clase> getClases() {
-        return clases;
-    }
-
-    public void setClases(List<Clase> clases) {
-        this.clases = clases;
-    }
-
 
     // Métodos de utilidad para manejar relaciones
     public void agregarPeriodo(Periodo periodo) {
@@ -102,16 +91,6 @@ public class Materia {
     public void removerPeriodo(Periodo periodo) {
         this.periodos.remove(periodo);  
         periodo.getMaterias().remove(this);  
-    }
-
-    public void agregarClase(Clase clase) {
-        clases.add(clase);
-        clase.setMateria(this);
-    }
-
-    public void removerClase(Clase clase) {
-        clases.remove(clase);
-        clase.setMateria(null);
     }
 
 }

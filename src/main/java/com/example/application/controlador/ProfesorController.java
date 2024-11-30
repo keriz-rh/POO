@@ -13,7 +13,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.FluentQuery.FetchableFluentQuery;
 import org.springframework.stereotype.Service;
 
-import com.example.application.modelo.Clase;
 import com.example.application.modelo.Profesor2;
 import com.example.application.modelo.Profesor2Repository;
 
@@ -199,52 +198,6 @@ public class ProfesorController implements Profesor2Repository {
     // Métodos específicos para Profesor2
     public List<Profesor2> findByEspecialidad(String especialidad) {
         return repository.findByEspecialidad(especialidad);
-    }
-
-    public List<Profesor2> findProfesoresDisponibles(int maxClases) {
-        return repository.findProfesoresDisponibles(maxClases);
-    }
-
-    public List<Profesor2> findProfesoresConMasClases(int minClases) {
-        return repository.findProfesoresConMasClases(minClases);
-    }
-
-    // Métodos de negocio
-    public void asignarClase(Profesor2 profesor, Clase clase) {
-        profesor.agregarClase(clase);
-        repository.save(profesor);
-    }
-
-    public void removerClase(Profesor2 profesor, Clase clase) {
-        profesor.removerClase(clase);
-        repository.save(profesor);
-    }
-
-    public long contarClasesAsignadas(Long profesorId) {
-        return repository.countClasesAsignadas(profesorId);
-    }
-
-    public boolean tieneConflictoHorario(Long profesorId, Long claseId) {
-        return repository.existeConflictoHorario(profesorId, claseId);
-    }
-
-    @Override
-    public long countClasesAsignadas(Long profesorId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'countClasesAsignadas'");
-    }
-
-    @Override
-    public boolean existeConflictoHorario(Long profesorId, Long claseId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'existeConflictoHorario'");
-    }
-
-    @Override
-    public boolean existeConflictoHorario(Long profesorId, Long claseId, String dia, LocalTime horaInicio,
-            LocalTime horaFin) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'existeConflictoHorario'");
     }
 
 }

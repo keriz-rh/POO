@@ -16,9 +16,6 @@ public class Profesor2 extends Persona {
     @Column(name = "especialidad", nullable = false, length = 100)
     private String especialidad;
 
-    @OneToMany(mappedBy = "profesor", cascade = CascadeType.ALL)
-    private List<Clase> clasesAsignadas = new ArrayList<>();
-
     // Constructor
     public Profesor2() {
         super();
@@ -31,18 +28,6 @@ public class Profesor2 extends Persona {
         setApellido(apellido);
         this.especialidad = especialidad;
     }
-   
-    // Método de utilidad para agregar una clase
-    public void agregarClase(Clase clase) {
-        clasesAsignadas.add(clase);
-        clase.setProfesor(this);
-    }
-
-    // Método de utilidad para remover una clase
-    public void removerClase(Clase clase) {
-        clasesAsignadas.remove(clase);
-        clase.setProfesor(null);
-    }
     
     
     // Getters y Setters
@@ -54,11 +39,4 @@ public class Profesor2 extends Persona {
         this.especialidad = especialidad;
     }
 
-    public List<Clase> getClasesAsignadas() {
-        return clasesAsignadas;
-    }
-
-    public void setClasesAsignadas(List<Clase> clasesAsignadas) {
-        this.clasesAsignadas = clasesAsignadas;
-    }
 }

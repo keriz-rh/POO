@@ -2,6 +2,7 @@ package com.example.application.controlador;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -16,6 +17,12 @@ import org.springframework.stereotype.Service;
 
 import com.example.application.modelo.Horario;
 import com.example.application.modelo.HorarioRepository;
+import com.example.application.modelo.Materia;
+import com.example.application.modelo.MateriaRepository;
+import com.example.application.modelo.Periodo;
+import com.example.application.modelo.PeriodoRepository;
+import com.example.application.modelo.Profesor2;
+import com.example.application.modelo.Profesor2Repository;
 
 
 
@@ -24,6 +31,15 @@ public class HorarioController implements HorarioRepository {
 
     @Autowired
     private HorarioRepository repository;
+
+    @Autowired
+    private MateriaRepository materiaRepository;
+
+    @Autowired 
+    private Profesor2Repository profesorRepository;
+
+    @Autowired
+    private PeriodoRepository periodoRepository;
 
     @Override
     public void flush() {
@@ -108,9 +124,31 @@ public class HorarioController implements HorarioRepository {
         throw new UnsupportedOperationException("Unimplemented method 'findAllById'");
     }
 
-    @Override
-    public <S extends Horario> S save(S entity) {
-        return repository.save(entity);
+    public Horario save(Horario horario) {
+        // Validar que el periodo esté activo
+        if (!horario.getPeriodo().getActivo()) {
+            throw new RuntimeException("El periodo seleccionado no está activo");
+        }
+        
+        // Validar conflictos de horario para el profesor
+        if (repository.existeConflictoHorario(
+                horario.getProfesor(),
+                horario.getDia(),
+                horario.getPeriodo(),
+                horario.getHoraInicio(),
+                horario.getHoraFin())) {
+            throw new RuntimeException("El profesor ya tiene un horario asignado en este periodo y horario");
+        }
+
+        // Validar horario de operación (7 AM a 10 PM)
+        LocalTime inicioOperacion = LocalTime.of(7, 0);
+        LocalTime finOperacion = LocalTime.of(22, 0);
+        if (horario.getHoraInicio().isBefore(inicioOperacion) || 
+            horario.getHoraFin().isAfter(finOperacion)) {
+            throw new RuntimeException("El horario debe estar entre las 7:00 AM y 10:00 PM");
+        }
+        
+        return repository.save(horario);
     }
 
     @Override
@@ -199,7 +237,7 @@ public class HorarioController implements HorarioRepository {
     }
 
     // Métodos específicos para Horario
-    public List<Horario> findByDia(DayOfWeek dia) {
+    public List<Horario> findByDia(String dia) {
         return repository.findByDia(dia);
     }
 
@@ -210,4 +248,33 @@ public class HorarioController implements HorarioRepository {
     public List<Horario> findByRangoHorario(LocalTime inicio, LocalTime fin) {
         return repository.findByRangoHorario(inicio, fin);
     }    
+
+    public List<Horario> findByProfesor(Profesor2 profesor) {
+        return repository.findByProfesor(profesor);
+    }
+    
+    public List<Horario> findByMateria(Materia materia) {
+        return repository.findByMateria(materia);
+    }
+    
+    public List<Horario> findByPeriodo(Periodo periodo) {
+        return repository.findByPeriodo(periodo);
+    }
+
+    public List<Horario> findByProfesorAndPeriodo(Profesor2 profesor, Periodo periodo) {
+        return repository.findByProfesorAndPeriodo(profesor, periodo);
+    }
+    
+    public List<Horario> findByMateriaAndPeriodo(Materia materia, Periodo periodo) {
+        return repository.findByMateriaAndPeriodo(materia, periodo);
+    }
+
+    @Override
+    public boolean existeConflictoHorario(Profesor2 profesor, String dia, Periodo periodo, LocalTime horaInicio,
+            LocalTime horaFin) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'existeConflictoHorario'");
+    }
+
+
 }

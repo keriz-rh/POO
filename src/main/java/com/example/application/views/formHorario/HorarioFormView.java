@@ -2,8 +2,13 @@ package com.example.application.views.formHorario;
 
 import java.util.List; 
 import com.example.application.controlador.HorarioController;
-import com.example.application.modelo.Clase;
+import com.example.application.controlador.MateriaController;
+import com.example.application.controlador.PeriodoController;
+import com.example.application.controlador.ProfesorController;
 import com.example.application.modelo.Horario;
+import com.example.application.modelo.Materia;
+import com.example.application.modelo.Periodo;
+import com.example.application.modelo.Profesor2;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.Text;
@@ -38,13 +43,18 @@ import java.time.LocalTime;
 public class HorarioFormView extends Composite<VerticalLayout> {
 
     private final HorarioController controller;
+    private final MateriaController materiaController;
+    private final ProfesorController profesorController;
+    private final PeriodoController periodoController;
 
     // Campos del formulario
     private final ComboBox<String> diaField = new ComboBox<>("Día");
     private final TimePicker horaInicioField = new TimePicker("Hora de inicio");
     private final TimePicker horaFinField = new TimePicker("Hora de fin");
     private final TextField aulaField = new TextField("Aula");
-    private final ComboBox<Clase> claseField = new ComboBox<>("Clase");
+    private final ComboBox<Materia> materiaField = new ComboBox<>("Materia");
+    private final ComboBox<Profesor2> profesorField = new ComboBox<>("Profesor");
+    private final ComboBox<Periodo> periodoField = new ComboBox<>("Periodo");
 
     // Grid principal de horarios
     private final Grid<Horario> horariosGrid = new Grid<>(Horario.class, false);
@@ -52,10 +62,19 @@ public class HorarioFormView extends Composite<VerticalLayout> {
     // Botones de filtrado
     private final Button btnFiltrarPorDia = new Button("Filtrar por Día");
     private final Button btnFiltrarPorAula = new Button("Filtrar por Aula");
-    private final Button btnFiltrarPorRango = new Button("Filtrar por Rango Horario");
+    private final Button btnFiltrarPorProfesor = new Button("Filtrar por Profesor");
+    private final Button btnFiltrarPorMateria = new Button("Filtrar por Materia");
+    private final Button btnFiltrarPorPeriodo = new Button("Filtrar por Periodo");
+    private final Button btnLimpiarFiltros = new Button("Limpiar Filtros");
 
-    public HorarioFormView(HorarioController controller) {
+    public HorarioFormView(HorarioController controller, 
+                          MateriaController materiaController,
+                          ProfesorController profesorController,
+                          PeriodoController periodoController) {
         this.controller = controller;
+        this.materiaController = materiaController;
+        this.profesorController = profesorController;
+        this.periodoController = periodoController;
 
         VerticalLayout layoutColumn2 = new VerticalLayout();
         H3 h3 = new H3();
@@ -71,27 +90,40 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         layoutColumn2.add(h3);
         layoutColumn2.add(formLayout2Col);
 
+        formLayout2Col.add(periodoField);
+        formLayout2Col.add(materiaField);
+        formLayout2Col.add(profesorField);
         formLayout2Col.add(diaField);
         formLayout2Col.add(horaInicioField);
         formLayout2Col.add(horaFinField);
         formLayout2Col.add(aulaField);
-        formLayout2Col.add(claseField);
 
         layoutColumn2.add(layoutRow);
         layoutRow.add(buttonPrimary);
         layoutRow.add(buttonSecondary);
-        layoutRow.add(btnFiltrarPorDia);
-        layoutRow.add(btnFiltrarPorAula);
-        layoutRow.add(btnFiltrarPorRango);
+
+        // Layout para botones de filtro
+        HorizontalLayout filterButtons = new HorizontalLayout();
+        filterButtons.setSpacing(true);
+        filterButtons.add(btnFiltrarPorDia, btnFiltrarPorAula, btnFiltrarPorProfesor,
+                         btnFiltrarPorMateria, btnFiltrarPorPeriodo, btnLimpiarFiltros);
+        layoutColumn2.add(filterButtons);
 
         getContent().add(layoutColumn2);
 
         createGrid();
 
+        // Configurar listeners
         buttonPrimary.addClickListener(e -> saveHorario());
         btnFiltrarPorDia.addClickListener(e -> filtrarPorDia());
         btnFiltrarPorAula.addClickListener(e -> filtrarPorAula());
-        btnFiltrarPorRango.addClickListener(e -> filtrarPorRango());
+        btnFiltrarPorProfesor.addClickListener(e -> filtrarPorProfesor());
+        btnFiltrarPorMateria.addClickListener(e -> filtrarPorMateria());
+        btnFiltrarPorPeriodo.addClickListener(e -> filtrarPorPeriodo());
+        btnLimpiarFiltros.addClickListener(e -> limpiarFiltros());
+
+        // Configurar estilos de botones
+        configurarEstilosBotones();
     }
 
     private void configureLayout(VerticalLayout layout, H3 title, FormLayout form, HorizontalLayout buttons) {
@@ -101,12 +133,17 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         getContent().setAlignItems(Alignment.CENTER);
 
         layout.setWidth("100%");
-        layout.setMaxWidth("800px");
+        layout.setMaxWidth("1200px");
 
-        title.setText("Información del Horario");
+        title.setText("Gestión de horarios");
         title.setWidth("100%");
 
         form.setWidth("100%");
+        form.setResponsiveSteps(
+            new FormLayout.ResponsiveStep("0", 1),
+            new FormLayout.ResponsiveStep("500px", 2),
+            new FormLayout.ResponsiveStep("800px", 3)
+        );
 
         buttons.addClassName(Gap.MEDIUM);
         buttons.setWidth("100%");
@@ -116,6 +153,7 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         // Configurar ComboBox día
         diaField.setItems("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo");
         diaField.setRequired(true);
+        diaField.setPlaceholder("Seleccione un día");
 
         // Configurar TimePickers
         horaInicioField.setStep(Duration.ofMinutes(15));
@@ -126,11 +164,38 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         // Configurar TextField
         aulaField.setRequired(true);
         aulaField.setMaxLength(50);
+        aulaField.setPlaceholder("Ingrese el aula");
 
-        // Configurar ComboBox clase
-        claseField.setRequired(true);
-        claseField.setItemLabelGenerator(Clase::toString);
+        materiaField.setItems(materiaController.findAll());
+        materiaField.setItemLabelGenerator(Materia::getNombre);
+        materiaField.setRequired(true);
+        materiaField.setPlaceholder("Seleccione una materia");
+
+        profesorField.setItems(profesorController.findAll());
+        profesorField.setItemLabelGenerator(p -> p.getNombre() + " " + p.getApellido());
+        profesorField.setRequired(true);
+        profesorField.setPlaceholder("Seleccione un profesor");
+
+        // Solo mostrar períodos activos en el combo
+        List<Periodo> periodosActivos = periodoController.findPeriodosActivos();
+        periodoField.setItems(periodosActivos);
+        periodoField.setItemLabelGenerator(Periodo::getNombre);
+        periodoField.setRequired(true);
+        periodoField.setPlaceholder("Seleccione un periodo");
+
+       // Validación de horario
+       horaFinField.addValueChangeListener(event -> {
+        if (horaInicioField.getValue() != null && event.getValue() != null) {
+            if (event.getValue().isBefore(horaInicioField.getValue())) {
+                Notification.show("La hora de fin debe ser posterior a la hora de inicio")
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                horaFinField.clear();
+            }
+        }
+    });
     }
+
+
 
     private void configureButtons(Button save, Button cancel) {
         save.setText("Guardar");
@@ -141,14 +206,25 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         cancel.setWidth("min-content");
     }
 
+    private void configurarEstilosBotones() {
+        btnFiltrarPorDia.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        btnFiltrarPorAula.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        btnFiltrarPorProfesor.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        btnFiltrarPorMateria.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        btnFiltrarPorPeriodo.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        btnLimpiarFiltros.addThemeVariants(ButtonVariant.LUMO_ERROR);
+    }
+
     private void createGrid() {
-        horariosGrid.addColumn(Horario::getId).setHeader("ID").setSortable(true);
         horariosGrid.addColumn(Horario::getDia).setHeader("Día").setSortable(true);
         horariosGrid.addColumn(Horario::getHoraInicio).setHeader("Hora Inicio").setSortable(true);
         horariosGrid.addColumn(Horario::getHoraFin).setHeader("Hora Fin").setSortable(true);
         horariosGrid.addColumn(Horario::getAula).setHeader("Aula").setSortable(true);
-        horariosGrid.addColumn(horario -> horario.getClase() != null ? 
-            horario.getClase().toString() : "").setHeader("Clase").setSortable(true);
+        horariosGrid.addColumn(horario -> horario.getMateria().getNombre()).setHeader("Materia").setSortable(true);
+        horariosGrid.addColumn(horario -> 
+            horario.getProfesor().getNombre() + " " + horario.getProfesor().getApellido()
+        ).setHeader("Profesor").setSortable(true);
+        horariosGrid.addColumn(horario -> horario.getPeriodo().getNombre()).setHeader("Periodo").setSortable(true);
 
         horariosGrid.addColumn(new ComponentRenderer<>(horario -> {
             Button editButton = new Button(new Icon(VaadinIcon.EDIT));
@@ -176,27 +252,47 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         horario.setHoraInicio(horaInicioField.getValue());
         horario.setHoraFin(horaFinField.getValue());
         horario.setAula(aulaField.getValue());
-        horario.setClase(claseField.getValue());
+        horario.setMateria(materiaField.getValue());
+        horario.setProfesor(profesorField.getValue());
+        horario.setPeriodo(periodoField.getValue());
 
-        controller.save(horario);
-        Notification.show("Horario guardado correctamente")
-            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        resetFields();
-        refreshGrid();
+        try {
+            controller.save(horario);
+            Notification.show("Horario guardado correctamente")
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            resetFields();
+            refreshGrid();
+        } catch (Exception e) {
+            Notification.show("Error: " + e.getMessage())
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
     }
 
     private boolean validateForm() {
         if (diaField.isEmpty() || horaInicioField.isEmpty() || horaFinField.isEmpty() || 
-            aulaField.isEmpty() || claseField.isEmpty()) {
+            aulaField.isEmpty() || materiaField.isEmpty() || profesorField.isEmpty() ||
+            periodoField.isEmpty()) {
             Notification.show("Por favor, complete todos los campos requeridos")
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return false;
         }
+
         if (horaFinField.getValue().isBefore(horaInicioField.getValue())) {
             Notification.show("La hora de fin debe ser posterior a la hora de inicio")
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return false;
         }
+
+        // Validar horario de operación (7 AM a 10 PM)
+        LocalTime inicioOperacion = LocalTime.of(7, 0);
+        LocalTime finOperacion = LocalTime.of(22, 0);
+        if (horaInicioField.getValue().isBefore(inicioOperacion) || 
+            horaFinField.getValue().isAfter(finOperacion)) {
+            Notification.show("El horario debe estar entre las 7:00 AM y 10:00 PM")
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return false;
+        }
+
         return true;
     }
 
@@ -205,7 +301,9 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         horaInicioField.clear();
         horaFinField.clear();
         aulaField.clear();
-        claseField.clear();
+        materiaField.clear();
+        profesorField.clear();
+        periodoField.clear();
     }
 
     private void refreshGrid() {
@@ -221,26 +319,26 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         TimePicker horaInicioEdit = new TimePicker("Hora de inicio");
         TimePicker horaFinEdit = new TimePicker("Hora de fin");
         TextField aulaEdit = new TextField("Aula");
-        ComboBox<Clase> claseEdit = new ComboBox<>("Clase");
+        ComboBox<Materia> materiaEdit = new ComboBox<>("Materia");
+        ComboBox<Profesor2> profesorEdit = new ComboBox<>("Profesor");
+        ComboBox<Periodo> periodoEdit = new ComboBox<>("Periodo");
 
         // Configurar campos
-        configureEditFields(diaEdit, horaInicioEdit, horaFinEdit, aulaEdit, claseEdit);
+        configureEditFields(diaEdit, horaInicioEdit, horaFinEdit, aulaEdit);
 
         // Establecer valores actuales
         diaEdit.setValue(horario.getDia());
         horaInicioEdit.setValue(horario.getHoraInicio());
         horaFinEdit.setValue(horario.getHoraFin());
         aulaEdit.setValue(horario.getAula());
-        claseEdit.setValue(horario.getClase());
 
-        formLayout.add(diaEdit, horaInicioEdit, horaFinEdit, aulaEdit, claseEdit);
+        formLayout.add(diaEdit, horaInicioEdit, horaFinEdit, aulaEdit);
 
         Button saveButton = new Button("Guardar", event -> {
             horario.setDia(diaEdit.getValue());
             horario.setHoraInicio(horaInicioEdit.getValue());
             horario.setHoraFin(horaFinEdit.getValue());
             horario.setAula(aulaEdit.getValue());
-            horario.setClase(claseEdit.getValue());
 
             controller.save(horario);
             refreshGrid();
@@ -257,8 +355,8 @@ public class HorarioFormView extends Composite<VerticalLayout> {
     }
 
     private void configureEditFields(ComboBox<String> diaEdit, TimePicker horaInicioEdit,
-                                   TimePicker horaFinEdit, TextField aulaEdit, 
-                                   ComboBox<Clase> claseEdit) {
+                                   TimePicker horaFinEdit, TextField aulaEdit 
+                                    ) {
         diaEdit.setItems("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo");
         diaEdit.setRequired(true);
         
@@ -268,21 +366,24 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         aulaEdit.setRequired(true);
         aulaEdit.setMaxLength(50);
         
-        claseEdit.setRequired(true);
-        claseEdit.setItemLabelGenerator(Clase::toString);
-        // Aquí deberías establecer los items del ComboBox de clases
     }
 
     private void deleteHorario(Horario horario) {
         Dialog confirmDialog = new Dialog();
         confirmDialog.add(new Text("¿Estás seguro de que deseas eliminar este horario?"));
 
+
         Button confirmButton = new Button("Eliminar", event -> {
-            controller.delete(horario);
-            refreshGrid();
-            Notification.show("Horario eliminado")
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-            confirmDialog.close();
+            try {
+                controller.delete(horario);
+                refreshGrid();
+                Notification.show("Horario eliminado correctamente")
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                confirmDialog.close();
+            } catch (Exception e) {
+                Notification.show("Error al eliminar el horario: " + e.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
         });
         confirmButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
 
@@ -298,8 +399,7 @@ public class HorarioFormView extends Composite<VerticalLayout> {
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
-        // Aquí necesitarás convertir el String a DayOfWeek
-        horariosGrid.setItems(controller.findByDia(getDayOfWeek(diaField.getValue())));
+        horariosGrid.setItems(controller.findByDia(diaField.getValue()));
     }
 
     private void filtrarPorAula() {
@@ -320,6 +420,40 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         LocalTime inicio = horaInicioField.getValue();
         LocalTime fin = horaFinField.getValue();
         horariosGrid.setItems(controller.findByRangoHorario(inicio, fin));
+    }
+
+    private void filtrarPorProfesor() {
+        if (profesorField.isEmpty()) {
+            Notification.show("Por favor, seleccione un profesor para filtrar")
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+        horariosGrid.setItems(controller.findByProfesor(profesorField.getValue()));
+    }
+
+    private void filtrarPorMateria() {
+        if (materiaField.isEmpty()) {
+            Notification.show("Por favor, seleccione una materia para filtrar")
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+        horariosGrid.setItems(controller.findByMateria(materiaField.getValue()));
+    }
+
+    private void filtrarPorPeriodo() {
+        if (periodoField.isEmpty()) {
+            Notification.show("Por favor, seleccione un periodo para filtrar")
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+        horariosGrid.setItems(controller.findByPeriodo(periodoField.getValue()));
+    }
+
+    private void limpiarFiltros() {
+        resetFields();
+        refreshGrid();
+        Notification.show("Filtros eliminados")
+            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 
     private java.time.DayOfWeek getDayOfWeek(String dia) {
@@ -379,65 +513,5 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         return String.format("%d:%02d %s", hora, tiempo.getMinute(), amPm);
     }
 
-    // Método para validar el horario de operación
-    private boolean validarHorarioOperacion(LocalTime inicio, LocalTime fin) {
-        LocalTime inicioOperacion = LocalTime.of(7, 0); // 7:00 AM
-        LocalTime finOperacion = LocalTime.of(22, 0);   // 10:00 PM
-        
-        return !inicio.isBefore(inicioOperacion) && !fin.isAfter(finOperacion);
-    }
 
-    // Método adicional para mostrar estadísticas de uso de aulas
-    private void mostrarEstadisticasAula(String aula) {
-        List<Horario> horariosAula = controller.findByAula(aula);
-        Dialog estadisticasDialog = new Dialog();
-        estadisticasDialog.setHeaderTitle("Estadísticas de Uso - " + aula);
-
-        VerticalLayout content = new VerticalLayout();
-        content.setSpacing(true);
-        content.setPadding(true);
-
-        // Calcular estadísticas
-        long totalHoras = horariosAula.stream()
-            .mapToLong(h -> java.time.Duration.between(h.getHoraInicio(), h.getHoraFin()).toHours())
-            .sum();
-
-        long clasesLunes = horariosAula.stream()
-            .filter(h -> h.getDia().equals("Lunes"))
-            .count();
-
-        // Añadir información
-        content.add(new Text("Total de horas semanales: " + totalHoras));
-        content.add(new Text("Cantidad de clases los lunes: " + clasesLunes));
-        // Añadir más estadísticas según necesites
-
-        Button cerrarButton = new Button("Cerrar", e -> estadisticasDialog.close());
-        cerrarButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-
-        content.add(cerrarButton);
-        estadisticasDialog.add(content);
-        estadisticasDialog.open();
-    }
-
-    // Método para exportar horarios
-    private void exportarHorarios() {
-        List<Horario> horarios = controller.findAll();
-        StringBuilder csv = new StringBuilder();
-        csv.append("ID,Día,Hora Inicio,Hora Fin,Aula,Clase\n");
-
-        for (Horario horario : horarios) {
-            csv.append(String.format("%d,%s,%s,%s,%s,%s\n",
-                horario.getId(),
-                horario.getDia(),
-                horario.getHoraInicio(),
-                horario.getHoraFin(),
-                horario.getAula(),
-                horario.getClase() != null ? horario.getClase().toString() : ""));
-        }
-
-        // Aquí podrías implementar la descarga del archivo CSV
-        // Por ahora solo mostraremos una notificación
-        Notification.show("Exportación completada")
-            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-    }
 }

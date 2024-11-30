@@ -199,7 +199,7 @@ public class EstudianteController implements Estudiante2Repository {
         throw new UnsupportedOperationException("Unimplemented method 'findBy'");
     }
 
-    // Métodos específicos para Estudiante2
+    // Métodos específicos para Estudiante
     public List<Estudiante2> findByNivelAcademico(String nivelAcademico) {
         return repository.findByNivelAcademico(nivelAcademico);
     }

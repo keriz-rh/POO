@@ -1,7 +1,6 @@
 package com.example.application.modelo;
 
 import java.time.LocalTime;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
@@ -28,8 +27,17 @@ public class Horario {
     @Column(length = 50, nullable = false)
     private String aula;
 
-    @OneToOne(mappedBy = "horario")
-    private Clase clase;
+    @ManyToOne
+    @JoinColumn(name = "materia_id", nullable = false)
+    private Materia materia;
+
+    @ManyToOne
+    @JoinColumn(name = "profesor_id", nullable = false)
+    private Profesor2 profesor;
+
+    @ManyToOne
+    @JoinColumn(name = "periodo_id", nullable = false)
+    private Periodo periodo;
 
     // Constructor vacío
     public Horario() {}
@@ -74,12 +82,27 @@ public class Horario {
     public void setAula(String aula) {
         this.aula = aula;
     }
-
-    public Clase getClase() {
-        return clase;
+    public Materia getMateria() {
+        return materia;
     }
 
-    public void setClase(Clase clase) {
-        this.clase = clase;
+    public void setMateria(Materia materia) {
+        this.materia = materia;
+    }
+
+    public Profesor2 getProfesor() {
+        return profesor;
+    }
+
+    public void setProfesor(Profesor2 profesor) {
+        this.profesor = profesor;
+    }
+
+    public Periodo getPeriodo() {
+        return periodo;
+    }
+
+    public void setPeriodo(Periodo periodo) {
+        this.periodo = periodo;
     }
 }

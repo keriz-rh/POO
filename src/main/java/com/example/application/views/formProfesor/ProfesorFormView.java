@@ -48,8 +48,6 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
 
     // Nuevos botones para métodos personalizados
     private final Button btnFiltrarPorEspecialidad = new Button("Filtrar por Especialidad");
-    private final Button btnFiltrarPorDisponibilidad = new Button("Filtrar por Disponibilidad");
-    private final Button btnFiltrarPorClases = new Button("Filtrar por Número de Clases");
 
     public ProfesorFormView(ProfesorController controller) {
         this.controller = controller;
@@ -80,8 +78,6 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
         layoutRow.add(buttonPrimary);
         layoutRow.add(buttonSecondary);
         layoutRow.add(btnFiltrarPorEspecialidad);
-        layoutRow.add(btnFiltrarPorDisponibilidad);
-        layoutRow.add(btnFiltrarPorClases);
         
         getContent().add(layoutColumn2);
         
@@ -89,8 +85,6 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
         
         buttonPrimary.addClickListener(e -> saveProfesor());
         btnFiltrarPorEspecialidad.addClickListener(e -> filtrarPorEspecialidad());
-        btnFiltrarPorDisponibilidad.addClickListener(e -> filtrarPorDisponibilidad());
-        btnFiltrarPorClases.addClickListener(e -> filtrarPorClases());
     }
 
     private void configureLayout(VerticalLayout layout, H3 title, FormLayout form, HorizontalLayout buttons) {
@@ -130,7 +124,7 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
     }
 
     private void createGrid() {
-        profesoresGrid.addColumn(Profesor2::getId).setHeader("CÓDIGO").setSortable(true);
+        //profesoresGrid.addColumn(Profesor2::getId).setHeader("CÓDIGO").setSortable(true);
         profesoresGrid.addColumn(Profesor2::getNombre).setHeader("Nombre").setSortable(true);
         profesoresGrid.addColumn(Profesor2::getApellido).setHeader("Apellido").setSortable(true);
         profesoresGrid.addColumn(Profesor2::getEdad).setHeader("Edad").setSortable(true);
@@ -248,13 +242,4 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
         profesoresGrid.setItems(controller.findByEspecialidad(especialidad));
     }
 
-    private void filtrarPorDisponibilidad() {
-        int maxClases = 3; // Puedes ajustar este valor según tus necesidades
-        profesoresGrid.setItems(controller.findProfesoresDisponibles(maxClases));
-    }
-
-    private void filtrarPorClases() {
-        int minClases = 5; // Puedes ajustar este valor según tus necesidades
-        profesoresGrid.setItems(controller.findProfesoresConMasClases(minClases));
-    }
 }

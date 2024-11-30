@@ -2,7 +2,6 @@ package com.example.application.controlador;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -102,6 +101,7 @@ public class PagoController implements PagoRepository {
         throw new UnsupportedOperationException("Unimplemented method 'findAllById'");
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     @Transactional  // Para operaciones de escritura
     public Pago save(Pago pago) {

@@ -37,9 +37,6 @@ public class Periodo {
     @Column
     private Boolean activo = false;
 
-    @OneToMany(mappedBy = "periodo", cascade = CascadeType.ALL)
-    private List<Clase> clases = new ArrayList<>();
-
     @ManyToMany(mappedBy = "periodos")
     private Set<Materia> materias = new HashSet<>();
 
@@ -62,16 +59,6 @@ public class Periodo {
         this.fechaFin = fechaFin;
     }
 
-    // Métodos de utilidad
-    public void agregarClase(Clase clase) {
-        clases.add(clase);
-        clase.setPeriodo(this);
-    }
-
-    public void removerClase(Clase clase) {
-        clases.remove(clase);
-        clase.setPeriodo(null);
-    }
 
     // Getters y Setters
     public Long getId() {
@@ -120,14 +107,6 @@ public class Periodo {
 
     public void setActivo(Boolean activo) {
         this.activo = activo;
-    }
-
-    public List<Clase> getClases() {
-        return clases;
-    }
-
-    public void setClases(List<Clase> clases) {
-        this.clases = clases;
     }
 
     public Set<Materia> getMaterias() {

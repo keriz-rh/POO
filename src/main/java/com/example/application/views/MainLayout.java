@@ -5,9 +5,6 @@ import com.example.application.views.formProfesor.ProfesorFormView;
 import com.example.application.views.formEstudiante.EstudianteFormView;
 import com.example.application.views.formPago.PagoFormView;
 import com.example.application.views.formPeriodo.PeriodoFormView;
-import com.example.application.views.formClase.ClaseFormView; 
-import com.example.application.views.formEvaluacion.EvaluacionFormView;
-import com.example.application.views.formExpedienteAcademico.ExpedienteAcademicoView;
 import com.example.application.views.formHorario.HorarioFormView;
 import com.example.application.views.formMateria.MateriaFormView;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -65,17 +62,11 @@ public class MainLayout extends AppLayout {
             
         nav.addItem(new SideNavItem("Estudiantes", EstudianteFormView.class, LineAwesomeIcon.GRADUATION_CAP_SOLID.create()));
 
-        nav.addItem(new SideNavItem("Gestión de Clases", 
-        ClaseFormView.class, 
-        LineAwesomeIcon.CLOCK_SOLID.create()));
         
         nav.addItem(new SideNavItem("Gestión de Pagos", 
             PagoFormView.class, 
             LineAwesomeIcon.MONEY_BILL_SOLID.create()));  
-
-        nav.addItem(new SideNavItem("Gestión de Evaluaciones", 
-        EvaluacionFormView.class, 
-        LineAwesomeIcon.CLIPBOARD_LIST_SOLID.create()));    
+ 
 
         nav.addItem(new SideNavItem("Gestión de Horarios", 
         HorarioFormView.class, 
@@ -88,10 +79,6 @@ public class MainLayout extends AppLayout {
         nav.addItem(new SideNavItem("Gestión de Períodos",
         com.example.application.views.formPeriodo.PeriodoFormView.class,
         LineAwesomeIcon.CALENDAR_ALT_SOLID.create()));
-
-        nav.addItem(new SideNavItem("Expedientes Académicos", 
-        ExpedienteAcademicoView.class, 
-        LineAwesomeIcon.FILE_ALT_SOLID.create()));
                   
         return nav;
     }
