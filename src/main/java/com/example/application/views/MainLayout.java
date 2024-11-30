@@ -1,6 +1,4 @@
 package com.example.application.views;
-
-
 import com.example.application.views.formProfesor.ProfesorFormView;
 import com.example.application.views.formEstudiante.EstudianteFormView;
 import com.example.application.views.formPago.PagoFormView;
@@ -10,6 +8,7 @@ import com.example.application.views.formEvaluacion.EvaluacionFormView;
 import com.example.application.views.formExpedienteAcademico.ExpedienteAcademicoView;
 import com.example.application.views.formHorario.HorarioFormView;
 import com.example.application.views.formMateria.MateriaFormView;
+import com.example.application.views.formGrupo.GrupoFormView;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.html.Footer;
@@ -63,35 +62,41 @@ public class MainLayout extends AppLayout {
             ProfesorFormView.class, 
             LineAwesomeIcon.CHALKBOARD_TEACHER_SOLID.create()));
             
-        nav.addItem(new SideNavItem("Estudiantes", EstudianteFormView.class, LineAwesomeIcon.GRADUATION_CAP_SOLID.create()));
+        nav.addItem(new SideNavItem("Estudiantes", 
+            EstudianteFormView.class, 
+            LineAwesomeIcon.GRADUATION_CAP_SOLID.create()));
 
         nav.addItem(new SideNavItem("Gestión de Clases", 
-        ClaseFormView.class, 
-        LineAwesomeIcon.CLOCK_SOLID.create()));
+            ClaseFormView.class, 
+            LineAwesomeIcon.CLOCK_SOLID.create()));
         
         nav.addItem(new SideNavItem("Gestión de Pagos", 
             PagoFormView.class, 
             LineAwesomeIcon.MONEY_BILL_SOLID.create()));  
 
         nav.addItem(new SideNavItem("Gestión de Evaluaciones", 
-        EvaluacionFormView.class, 
-        LineAwesomeIcon.CLIPBOARD_LIST_SOLID.create()));    
+            EvaluacionFormView.class, 
+            LineAwesomeIcon.CLIPBOARD_LIST_SOLID.create()));    
 
         nav.addItem(new SideNavItem("Gestión de Horarios", 
-        HorarioFormView.class, 
-        LineAwesomeIcon.CALENDAR_ALT_SOLID.create()));
+            HorarioFormView.class, 
+            LineAwesomeIcon.CALENDAR_ALT_SOLID.create()));
 
         nav.addItem(new SideNavItem("Gestión de Materias", 
             MateriaFormView.class, 
             LineAwesomeIcon.BOOK_SOLID.create()));           
 
         nav.addItem(new SideNavItem("Gestión de Períodos",
-        com.example.application.views.formPeriodo.PeriodoFormView.class,
-        LineAwesomeIcon.CALENDAR_ALT_SOLID.create()));
+            PeriodoFormView.class,
+            LineAwesomeIcon.CALENDAR_ALT_SOLID.create()));
 
         nav.addItem(new SideNavItem("Expedientes Académicos", 
-        ExpedienteAcademicoView.class, 
-        LineAwesomeIcon.FILE_ALT_SOLID.create()));
+            ExpedienteAcademicoView.class, 
+            LineAwesomeIcon.FILE_ALT_SOLID.create()));
+
+        nav.addItem(new SideNavItem("Gestión de Grupos",
+            GrupoFormView.class,
+            LineAwesomeIcon.USERS_SOLID.create()));
                   
         return nav;
     }
