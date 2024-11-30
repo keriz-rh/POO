@@ -2,10 +2,12 @@ package com.example.application.controlador;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -113,9 +115,16 @@ public class HorarioController implements HorarioRepository {
         throw new UnsupportedOperationException("Unimplemented method 'saveAll'");
     }
 
-    @Override
     public List<Horario> findAll() {
-        return repository.findAll();
+        try {
+            return repository.findAll().stream()
+                .filter(h -> h.getMateria() != null && 
+                           h.getProfesor() != null && 
+                           h.getPeriodo() != null)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     @Override

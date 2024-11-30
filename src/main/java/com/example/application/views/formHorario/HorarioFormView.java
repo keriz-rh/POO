@@ -161,23 +161,34 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         horaInicioField.setRequired(true);
         horaFinField.setRequired(true);
 
-        // Configurar TextField
+        // Campo aula
         aulaField.setRequired(true);
         aulaField.setMaxLength(50);
         aulaField.setPlaceholder("Ingrese el aula");
 
-        materiaField.setItems(materiaController.findAll());
+        //Combobox materia
+        List<Materia> materias = materiaController.findAll();
+        if (materias != null && !materias.isEmpty()) {
+            materiaField.setItems(materias);
+        }
         materiaField.setItemLabelGenerator(Materia::getNombre);
         materiaField.setRequired(true);
         materiaField.setPlaceholder("Seleccione una materia");
 
-        profesorField.setItems(profesorController.findAll());
+        //Combobox profesores
+        List<Profesor2> profesores = profesorController.findAll();
+        if (profesores != null && !profesores.isEmpty()) {
+            profesorField.setItems(profesores);
+        }
         profesorField.setItemLabelGenerator(p -> p.getNombre() + " " + p.getApellido());
         profesorField.setRequired(true);
         profesorField.setPlaceholder("Seleccione un profesor");
 
         // Solo mostrar períodos activos en el combo
         List<Periodo> periodosActivos = periodoController.findPeriodosActivos();
+        if (periodosActivos != null && !periodosActivos.isEmpty()) {
+            periodoField.setItems(periodosActivos);
+        }
         periodoField.setItems(periodosActivos);
         periodoField.setItemLabelGenerator(Periodo::getNombre);
         periodoField.setRequired(true);
@@ -204,6 +215,7 @@ public class HorarioFormView extends Composite<VerticalLayout> {
 
         cancel.setText("Cancelar");
         cancel.setWidth("min-content");
+        cancel.addClickListener(e -> resetFields());
     }
 
     private void configurarEstilosBotones() {
@@ -220,11 +232,13 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         horariosGrid.addColumn(Horario::getHoraInicio).setHeader("Hora Inicio").setSortable(true);
         horariosGrid.addColumn(Horario::getHoraFin).setHeader("Hora Fin").setSortable(true);
         horariosGrid.addColumn(Horario::getAula).setHeader("Aula").setSortable(true);
-        horariosGrid.addColumn(horario -> horario.getMateria().getNombre()).setHeader("Materia").setSortable(true);
+        horariosGrid.addColumn(horario -> horario.getMateria().getNombre())
+                   .setHeader("Materia").setSortable(true);
         horariosGrid.addColumn(horario -> 
-            horario.getProfesor().getNombre() + " " + horario.getProfesor().getApellido()
-        ).setHeader("Profesor").setSortable(true);
-        horariosGrid.addColumn(horario -> horario.getPeriodo().getNombre()).setHeader("Periodo").setSortable(true);
+            horario.getProfesor().getNombre() + " " + horario.getProfesor().getApellido())
+                   .setHeader("Profesor").setSortable(true);
+        horariosGrid.addColumn(horario -> horario.getPeriodo().getNombre())
+                   .setHeader("Periodo").setSortable(true);
 
         horariosGrid.addColumn(new ComponentRenderer<>(horario -> {
             Button editButton = new Button(new Icon(VaadinIcon.EDIT));
@@ -307,7 +321,10 @@ public class HorarioFormView extends Composite<VerticalLayout> {
     }
 
     private void refreshGrid() {
-        horariosGrid.setItems(controller.findAll());
+        List<Horario> horarios = controller.findAll();
+        if (horarios != null) {
+            horariosGrid.setItems(horarios);
+        }
     }
 
     private void openEditDialog(Horario horario) {
@@ -324,48 +341,90 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         ComboBox<Periodo> periodoEdit = new ComboBox<>("Periodo");
 
         // Configurar campos
-        configureEditFields(diaEdit, horaInicioEdit, horaFinEdit, aulaEdit);
+        diaEdit.setItems("Lunes", "Martes", "Miércoles", "Jueves", "Viernes");
+        horaInicioEdit.setStep(Duration.ofMinutes(15));
+        horaFinEdit.setStep(Duration.ofMinutes(15));
+        materiaEdit.setItems(materiaController.findAll());
+        materiaEdit.setItemLabelGenerator(Materia::getNombre);
+        profesorEdit.setItems(profesorController.findAll());
+        profesorEdit.setItemLabelGenerator(p -> p.getNombre() + " " + p.getApellido());
+        periodoEdit.setItems(periodoController.findPeriodosActivos());
+        periodoEdit.setItemLabelGenerator(Periodo::getNombre);
 
         // Establecer valores actuales
         diaEdit.setValue(horario.getDia());
         horaInicioEdit.setValue(horario.getHoraInicio());
         horaFinEdit.setValue(horario.getHoraFin());
         aulaEdit.setValue(horario.getAula());
+        materiaEdit.setValue(horario.getMateria());
+        profesorEdit.setValue(horario.getProfesor());
+        periodoEdit.setValue(horario.getPeriodo());
 
-        formLayout.add(diaEdit, horaInicioEdit, horaFinEdit, aulaEdit);
+        formLayout.add(periodoEdit, materiaEdit, profesorEdit, 
+                      diaEdit, horaInicioEdit, horaFinEdit, aulaEdit);
+
 
         Button saveButton = new Button("Guardar", event -> {
-            horario.setDia(diaEdit.getValue());
-            horario.setHoraInicio(horaInicioEdit.getValue());
-            horario.setHoraFin(horaFinEdit.getValue());
-            horario.setAula(aulaEdit.getValue());
+            if (validateEditForm(diaEdit, horaInicioEdit, horaFinEdit, aulaEdit,
+                               materiaEdit, profesorEdit, periodoEdit)) {
+                horario.setDia(diaEdit.getValue());
+                horario.setHoraInicio(horaInicioEdit.getValue());
+                horario.setHoraFin(horaFinEdit.getValue());
+                horario.setAula(aulaEdit.getValue());
+                horario.setMateria(materiaEdit.getValue());
+                horario.setProfesor(profesorEdit.getValue());
+                horario.setPeriodo(periodoEdit.getValue());
 
-            controller.save(horario);
-            refreshGrid();
-            dialog.close();
-            Notification.show("Horario actualizado")
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                try {
+                    controller.save(horario);
+                    refreshGrid();
+                    dialog.close();
+                    Notification.show("Horario actualizado correctamente")
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                } catch (Exception e) {
+                    Notification.show("Error: " + e.getMessage())
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                }
+            }
         });
 
         Button cancelButton = new Button("Cancelar", event -> dialog.close());
 
+        dialog.add(new H3("Editar Horario"));
         dialog.add(formLayout);
         dialog.add(new HorizontalLayout(saveButton, cancelButton));
         dialog.open();
     }
 
-    private void configureEditFields(ComboBox<String> diaEdit, TimePicker horaInicioEdit,
-                                   TimePicker horaFinEdit, TextField aulaEdit 
-                                    ) {
-        diaEdit.setItems("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo");
-        diaEdit.setRequired(true);
-        
-        horaInicioEdit.setStep(Duration.ofMinutes(15));
-        horaFinEdit.setStep(Duration.ofMinutes(15));
-        
-        aulaEdit.setRequired(true);
-        aulaEdit.setMaxLength(50);
-        
+
+    private boolean validateEditForm(ComboBox<String> diaEdit, TimePicker horaInicioEdit,
+                                   TimePicker horaFinEdit, TextField aulaEdit,
+                                   ComboBox<Materia> materiaEdit, ComboBox<Profesor2> profesorEdit,
+                                   ComboBox<Periodo> periodoEdit) {
+        if (diaEdit.isEmpty() || horaInicioEdit.isEmpty() || horaFinEdit.isEmpty() ||
+            aulaEdit.isEmpty() || materiaEdit.isEmpty() || profesorEdit.isEmpty() ||
+            periodoEdit.isEmpty()) {
+            Notification.show("Por favor, complete todos los campos requeridos")
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return false;
+        }
+
+        if (horaFinEdit.getValue().isBefore(horaInicioEdit.getValue())) {
+            Notification.show("La hora de fin debe ser posterior a la hora de inicio")
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return false;
+        }
+
+        LocalTime inicioOperacion = LocalTime.of(7, 0);
+        LocalTime finOperacion = LocalTime.of(22, 0);
+        if (horaInicioEdit.getValue().isBefore(inicioOperacion) || 
+            horaFinEdit.getValue().isAfter(finOperacion)) {
+            Notification.show("El horario debe estar entre las 7:00 AM y 10:00 PM")
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return false;
+        }
+
+        return true;
     }
 
     private void deleteHorario(Horario horario) {
@@ -455,63 +514,5 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         Notification.show("Filtros eliminados")
             .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
-
-    private java.time.DayOfWeek getDayOfWeek(String dia) {
-        return switch (dia.toLowerCase()) {
-            case "lunes" -> java.time.DayOfWeek.MONDAY;
-            case "martes" -> java.time.DayOfWeek.TUESDAY;
-            case "miércoles", "miercoles" -> java.time.DayOfWeek.WEDNESDAY;
-            case "jueves" -> java.time.DayOfWeek.THURSDAY;
-            case "viernes" -> java.time.DayOfWeek.FRIDAY;
-            case "sábado", "sabado" -> java.time.DayOfWeek.SATURDAY;
-            case "domingo" -> java.time.DayOfWeek.SUNDAY;
-            default -> throw new IllegalArgumentException("Día no válido: " + dia);
-        };
-    }
-
-    private String getDayName(java.time.DayOfWeek dayOfWeek) {
-        return switch (dayOfWeek) {
-            case MONDAY -> "Lunes";
-            case TUESDAY -> "Martes";
-            case WEDNESDAY -> "Miércoles";
-            case THURSDAY -> "Jueves";
-            case FRIDAY -> "Viernes";
-            case SATURDAY -> "Sábado";
-            case SUNDAY -> "Domingo";
-        };
-    }
-
-    // Método auxiliar para validar el solapamiento de horarios
-    private boolean validarSolapamiento(LocalTime inicio, LocalTime fin, String dia, String aula, Long idActual) {
-        List<Horario> horariosExistentes = controller.findByAula(aula);
-        
-        for (Horario horario : horariosExistentes) {
-            // Ignorar el horario actual en caso de edición
-            if (horario.getId().equals(idActual)) {
-                continue;
-            }
-            
-            // Verificar si es el mismo día
-            if (horario.getDia().equals(dia)) {
-                // Verificar solapamiento de horarios
-                if (!(fin.isBefore(horario.getHoraInicio()) || inicio.isAfter(horario.getHoraFin()))) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    // Método para formatear la hora en formato de 12 horas
-    private String formatearHora(LocalTime tiempo) {
-        if (tiempo == null) return "";
-        
-        String amPm = tiempo.getHour() >= 12 ? "PM" : "AM";
-        int hora = tiempo.getHour() % 12;
-        if (hora == 0) hora = 12;
-        
-        return String.format("%d:%02d %s", hora, tiempo.getMinute(), amPm);
-    }
-
 
 }
