@@ -25,6 +25,11 @@ public class Clase {
     @JoinColumn(name = "horario_id", referencedColumnName = "id")
     private Horario horario;
 
+    @ManyToOne
+    @JoinColumn(name = "grupo_id")
+    private Grupo grupo;
+
+
     // Getters y Setters
     public Long getIdClase() {
         return idClase;
@@ -66,12 +71,21 @@ public class Clase {
         this.horario = horario;
     }
 
+   public Grupo getGrupo() {
+        return grupo;
+    }
+
+    public void setGrupo(Grupo grupo) {
+        this.grupo = grupo;
+    }
+
     @Override
     public String toString() {
-        return String.format("%s - %s - %s", 
+        return String.format("%s - %s - %s - %s", 
             materia != null ? materia.getNombre() : "Sin materia",
             profesor != null ? profesor.getNombre() : "Sin profesor",
-            horario != null ? horario.getDia() : "Sin horario"
+            horario != null ? horario.getDia() : "Sin horario",
+            grupo != null ? grupo.getNombre() : "Sin grupo"
         );
     }
 }
