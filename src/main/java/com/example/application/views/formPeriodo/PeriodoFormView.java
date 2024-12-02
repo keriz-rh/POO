@@ -105,7 +105,7 @@ public class PeriodoFormView extends Composite<VerticalLayout> {
         layout.setWidth("100%");
         layout.setMaxWidth("800px");
         
-        title.setText("Información del Período Académico");
+        title.setText("Gestión de Períodos Académicos");
         title.setWidth("100%");
         
         form.setWidth("100%");

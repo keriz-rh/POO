@@ -100,7 +100,7 @@ public class MateriaFormView extends Composite<VerticalLayout> {
         layout.setWidth("100%");
         layout.setMaxWidth("800px");
         
-        title.setText("Información de la Materia");
+        title.setText("Gestión de Materias");
         title.setWidth("100%");
         
         form.setWidth("100%");
