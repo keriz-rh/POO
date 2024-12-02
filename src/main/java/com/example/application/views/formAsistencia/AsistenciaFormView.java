@@ -92,7 +92,7 @@ public class AsistenciaFormView extends VerticalLayout {
 
     private void configurarLayout() {
         // Título
-        H3 titulo = new H3("Gestión de Asistencia");
+        H3 titulo = new H3("Control de Asistencia");
 
         // Formulario
         FormLayout formLayout = new FormLayout();
