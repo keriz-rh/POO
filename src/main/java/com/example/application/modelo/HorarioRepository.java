@@ -52,4 +52,6 @@ public interface HorarioRepository extends JpaRepository <Horario, Long> {
         @Param("periodo") Periodo periodo
     );
     
+    @Query("SELECT h FROM Horario h WHERE h.id NOT IN (SELECT gh.id FROM Grupo g JOIN g.horarios gh)")
+    List<Horario> findHorariosDisponibles();
 }

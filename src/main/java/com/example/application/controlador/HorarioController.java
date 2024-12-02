@@ -185,6 +185,12 @@ public class HorarioController implements HorarioRepository {
         repository.delete(entity);
     }
 
+    public List<Horario> findHorariosDisponibles() {
+        List<Horario> horarios = repository.findHorariosDisponibles();
+        System.out.println("Horarios disponibles encontrados: " + horarios.size());
+        return horarios;
+    }
+
     @Override
     public void deleteAllById(Iterable<? extends Long> ids) {
         // TODO Auto-generated method stub

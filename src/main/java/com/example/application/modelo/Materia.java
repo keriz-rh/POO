@@ -16,7 +16,6 @@ public class Materia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idMateria;
 
-    // Relación con Periodo
     @ManyToMany
     @JoinTable(
         name = "materia_periodo",

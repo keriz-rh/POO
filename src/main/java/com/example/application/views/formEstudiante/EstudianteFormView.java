@@ -200,8 +200,7 @@ public class EstudianteFormView extends Composite<VerticalLayout> {
                 return placeholder;
             }
         }).setHeader("Foto").setWidth("100px").setFlexGrow(0);
-
-        //estudiantesGrid.addColumn(Estudiante2::getId).setHeader("CÓDIGO").setSortable(true);
+        
         estudiantesGrid.addColumn(Estudiante2::getNombre).setHeader("Nombres").setSortable(true);
         estudiantesGrid.addColumn(Estudiante2::getApellido).setHeader("Apellidos").setSortable(true);
         estudiantesGrid.addColumn(Estudiante2::getNivelAcademico).setHeader("Nivel Académico").setSortable(true);

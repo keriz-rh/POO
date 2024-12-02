@@ -39,6 +39,10 @@ public class Horario {
     @JoinColumn(name = "periodo_id", nullable = false)
     private Periodo periodo;
 
+    @ManyToOne
+    @JoinColumn(name = "grupo_id")
+    private Grupo grupo;
+
     // Constructor vacío
     public Horario() {}
 
@@ -104,5 +108,13 @@ public class Horario {
 
     public void setPeriodo(Periodo periodo) {
         this.periodo = periodo;
+    }
+
+    public Grupo getGrupo() {
+        return grupo;
+    }
+
+    public void setGrupo(Grupo grupo) {
+        this.grupo = grupo;
     }
 }

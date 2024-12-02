@@ -7,6 +7,7 @@ import com.example.application.views.formPago.PagoFormView;
 import com.example.application.views.formPeriodo.PeriodoFormView;
 import com.example.application.views.formHorario.HorarioFormView;
 import com.example.application.views.formMateria.MateriaFormView;
+import com.example.application.views.formGrupo.GrupoFormView;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.html.Footer;
@@ -79,6 +80,10 @@ public class MainLayout extends AppLayout {
         nav.addItem(new SideNavItem("Gestión de Períodos",
         com.example.application.views.formPeriodo.PeriodoFormView.class,
         LineAwesomeIcon.CALENDAR_ALT_SOLID.create()));
+
+        nav.addItem(new SideNavItem("Gestión de Grupos", 
+        GrupoFormView.class, 
+        LineAwesomeIcon.USERS_SOLID.create()));
                   
         return nav;
     }
