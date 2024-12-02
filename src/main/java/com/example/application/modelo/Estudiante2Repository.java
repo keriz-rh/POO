@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -15,7 +17,7 @@ public interface Estudiante2Repository extends JpaRepository <Estudiante2, Long>
     Optional<Estudiante2> findByCarnet(String carnet);
 
     List<Estudiante2> findByNombrePadre(String nombrePadre);
-
+    
     List<Estudiante2> findByFechaInscripcionBetween(
     LocalDate inicio, LocalDate fin);
     

@@ -1,7 +1,6 @@
 package com.example.application.views.formGrupo;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,15 +15,8 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.grid.Grid.SelectionMode;
-import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.grid.dataview.GridListDataView;
-import com.vaadin.flow.component.gridpro.GridPro;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
-import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -100,7 +92,7 @@ public class GrupoFormView extends Composite<VerticalLayout> {
         layout.setWidth("100%");
         layout.setMaxWidth("800px");
         
-        title.setText("Información del Grupo");
+        title.setText("Gestión de Grupos");
         title.setWidth("100%");
         
         form.setWidth("100%");
@@ -157,7 +149,7 @@ public class GrupoFormView extends Composite<VerticalLayout> {
             addStudentButton.setText("Agregar Estudiantes");
             addStudentButton.setWidth("min-content");
             addStudentButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            addStudentButton.addClickListener(e -> openAddStudentsDialog(grupo));
+            addStudentButton.addClickListener(e -> openAddStudentsDialog(grupo, null));
 
             Button addHorarioButton = new Button();
             getContent().setWidth("100%");
@@ -165,7 +157,7 @@ public class GrupoFormView extends Composite<VerticalLayout> {
             addHorarioButton.setText("Agregar Horario");
             addHorarioButton.setWidth("min-content");
             addHorarioButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            addHorarioButton.addClickListener(e -> openAddHorariosDialog(grupo));
+            addHorarioButton.addClickListener(e -> openAddHorariosDialog(grupo, null));
             
             return new HorizontalLayout(addStudentButton, addHorarioButton, viewButton, editButton, deleteButton);
         })).setHeader("Acciones");
@@ -218,25 +210,28 @@ public class GrupoFormView extends Composite<VerticalLayout> {
         gruposGrid.setItems(controller.findAll());
     }
 
-    private void openAddStudentsDialog(Grupo grupo) {
+    private void openAddStudentsDialog(Grupo grupo, Grid<Estudiante2> estudiantesGrid) {
         Dialog dialog = new Dialog();
         VerticalLayout dialogLayout = new VerticalLayout();
         
-        // Grid de estudiantes
-        Grid<Estudiante2> estudiantesGrid = new Grid<>(Estudiante2.class, false);
-        estudiantesGrid.addColumn(Estudiante2::getNombre).setHeader("Nombre").setSortable(true);
-        estudiantesGrid.addColumn(Estudiante2::getApellido).setHeader("Apellido").setSortable(true);
-        estudiantesGrid.addColumn(Estudiante2::getCarnet).setHeader("Carnet").setSortable(true);
+        // Grid de estudiantes disponibles
+        Grid<Estudiante2> estudiantesDisponiblesGrid = new Grid<>(Estudiante2.class, false);
+        estudiantesDisponiblesGrid.addColumn(Estudiante2::getNombre).setHeader("Nombre").setSortable(true);
+        estudiantesDisponiblesGrid.addColumn(Estudiante2::getApellido).setHeader("Apellido").setSortable(true);
+        estudiantesDisponiblesGrid.addColumn(Estudiante2::getCarnet).setHeader("Carnet").setSortable(true);
         
-        // Configurar selección múltiple en el grid
-        estudiantesGrid.setSelectionMode(Grid.SelectionMode.MULTI);
+        // Configurar selección múltiple
+        estudiantesDisponiblesGrid.setSelectionMode(Grid.SelectionMode.MULTI);
         
-        // Cargar estudiantes
-        estudiantesGrid.setItems(estudianteController.findAll());
+        // Cargar solo estudiantes que no están en el grupo
+        List<Estudiante2> estudiantesDisponibles = estudianteController.findAll().stream()
+            .filter(e -> !grupo.getEstudiantes().contains(e))
+            .collect(Collectors.toList());
+        estudiantesDisponiblesGrid.setItems(estudiantesDisponibles);
         
         // Botones
         Button addButton = new Button("Agregar", event -> {
-            Set<Estudiante2> selectedStudents = estudiantesGrid.getSelectedItems();
+            Set<Estudiante2> selectedStudents = estudiantesDisponiblesGrid.getSelectedItems();
             if (selectedStudents.isEmpty()) {
                 Notification.show("Seleccione al menos un estudiante")
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -247,8 +242,9 @@ public class GrupoFormView extends Composite<VerticalLayout> {
                 for (Estudiante2 estudiante : selectedStudents) {
                     controller.agregarEstudiante(grupo, estudiante);
                 }
+                // Actualizar el grid del diálogo de edición
+                estudiantesGrid.setItems(grupo.getEstudiantes());
                 dialog.close();
-                refreshGrid();
                 Notification.show("Estudiantes agregados correctamente")
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             } catch (Exception e) {
@@ -260,13 +256,13 @@ public class GrupoFormView extends Composite<VerticalLayout> {
         
         Button cancelButton = new Button("Cancelar", e -> dialog.close());
         
-        // Configurar layout
+        // Layout
         HorizontalLayout buttonLayout = new HorizontalLayout(addButton, cancelButton);
         buttonLayout.setJustifyContentMode(JustifyContentMode.END);
         
         dialogLayout.add(
             new H3("Agregar Estudiantes al Grupo"),
-            estudiantesGrid,
+            estudiantesDisponiblesGrid,
             buttonLayout
         );
         
@@ -276,137 +272,111 @@ public class GrupoFormView extends Composite<VerticalLayout> {
         
         dialog.open();
     }
-
-private void openAddHorariosDialog(Grupo grupo) {
-    Dialog dialog = new Dialog();
-    VerticalLayout dialogLayout = new VerticalLayout();
     
-    // ComboBox de horarios
-    ComboBox<Horario> horarioComboBox = new ComboBox<>("Seleccione un Horario");
-    horarioComboBox.setWidth("100%");
-    
-    // Configurar el generador de etiquetas para mostrar la información del horario
-    horarioComboBox.setItemLabelGenerator(horario -> 
-        horario.getPeriodo().getNombre() + " | " +
-        horario.getMateria().getNombre() + " | " +
-        "Aula: " + horario.getAula() + " | " +
-        horario.getProfesor().getNombre() + " " + horario.getProfesor().getApellido() + " | " +
-        horario.getHoraInicio() + " - " + horario.getHoraFin()
-    );
-    
-    // Cargar solo horarios disponibles
-    List<Horario> horariosDisponibles = horarioController.findHorariosDisponibles();
-    horarioComboBox.setItems(horariosDisponibles);
-    
-    // Botones
-    Button addButton = new Button("Agregar", event -> {
-        Horario selectedHorario = horarioComboBox.getValue();
-        if (selectedHorario == null) {
-            Notification.show("Por favor, seleccione un horario")
-                .addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-        
-        try {
-            controller.agregarHorario(grupo, selectedHorario);
-            dialog.close();
-            refreshGrid();
-            Notification.show("Horario agregado correctamente")
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        } catch (Exception e) {
-            Notification.show("Error: " + e.getMessage())
-                .addThemeVariants(NotificationVariant.LUMO_ERROR);
-        }
-    });
-    addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-    
-    Button cancelButton = new Button("Cancelar", e -> dialog.close());
-    
-    // Configurar layout
-    HorizontalLayout buttonLayout = new HorizontalLayout(addButton, cancelButton);
-    buttonLayout.setJustifyContentMode(JustifyContentMode.END);
-    
-    dialogLayout.add(
-        new H3("Agregar Horario al Grupo"),
-        horarioComboBox,
-        buttonLayout
-    );
-    
-    dialog.add(dialogLayout);
-    dialog.setWidth("600px");
-    dialog.setMinHeight("200px");
-    
-    dialog.open();
-}
-
-    private void openEditDialog(Grupo grupo) {
+    private void openAddHorariosDialog(Grupo grupo, Grid<Horario> horariosGrid) {
         Dialog dialog = new Dialog();
-        FormLayout formLayout = new FormLayout();
+        VerticalLayout dialogLayout = new VerticalLayout();
         
-        TextField nombreEdit = new TextField("Nombre");
-        NumberField capacidadEdit = new NumberField("Capacidad");
+        // ComboBox de horarios
+        ComboBox<Horario> horarioComboBox = new ComboBox<>("Seleccione un Horario");
+        horarioComboBox.setWidth("100%");
         
-        nombreEdit.setValue(grupo.getNombre());
-        capacidadEdit.setValue((double) grupo.getCapacidadEstudiantes());
+        // Configurar el generador de etiquetas
+        horarioComboBox.setItemLabelGenerator(horario -> 
+            horario.getPeriodo().getNombre() + " | " +
+            horario.getMateria().getNombre() + " | " +
+            "Aula: " + horario.getAula() + " | " +
+            horario.getProfesor().getNombre() + " " + horario.getProfesor().getApellido() + " | " +
+            horario.getHoraInicio() + " - " + horario.getHoraFin()
+        );
         
-        formLayout.add(nombreEdit, capacidadEdit);
+        // Cargar solo horarios disponibles
+        List<Horario> horariosDisponibles = horarioController.findHorariosDisponibles();
+        horarioComboBox.setItems(horariosDisponibles);
         
-        Button saveButton = new Button("Guardar", event -> {
-            if (validateEditFields(nombreEdit, capacidadEdit)) {
-                grupo.setNombre(nombreEdit.getValue());
-                grupo.setCapacidadEstudiantes(capacidadEdit.getValue().intValue());
-                
-                try {
-                    controller.save(grupo);
-                    refreshGrid();
-                    dialog.close();
-                    Notification.show("Grupo actualizado correctamente")
-                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                } catch (Exception e) {
-                    Notification.show("Error: " + e.getMessage())
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
-                }
+        // Botones
+        Button addButton = new Button("Agregar", event -> {
+            Horario selectedHorario = horarioComboBox.getValue();
+            if (selectedHorario == null) {
+                Notification.show("Por favor, seleccione un horario")
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+            
+            try {
+                controller.agregarHorario(grupo, selectedHorario);
+                // Actualizar el grid del diálogo de edición
+                horariosGrid.setItems(grupo.getHorarios());
+                dialog.close();
+                Notification.show("Horario agregado correctamente")
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception e) {
+                Notification.show("Error: " + e.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         });
+        addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         
-        Button cancelButton = new Button("Cancelar", event -> dialog.close());
+        Button cancelButton = new Button("Cancelar", e -> dialog.close());
         
-        dialog.add(new H3("Editar Grupo"));
-        dialog.add(formLayout);
-        dialog.add(new HorizontalLayout(saveButton, cancelButton));
+        // Layout
+        HorizontalLayout buttonLayout = new HorizontalLayout(addButton, cancelButton);
+        buttonLayout.setJustifyContentMode(JustifyContentMode.END);
+        
+        dialogLayout.add(
+            new H3("Agregar Horario al Grupo"),
+            horarioComboBox,
+            buttonLayout
+        );
+        
+        dialog.add(dialogLayout);
+        dialog.setWidth("600px");
+        dialog.setMinHeight("200px");
+        
         dialog.open();
     }
 
-    private void showGrupoDetails(Grupo grupo) {
-    Optional<Grupo> grupoConDetalles = controller.findByIdWithDetails(grupo.getId());
-
-    Dialog dialog = new Dialog();
-    VerticalLayout mainLayout = new VerticalLayout();
     
+private void openEditDialog(Grupo grupo) {
+    Dialog dialog = new Dialog();
+    VerticalLayout dialogLayout = new VerticalLayout();
+
     // Información básica del grupo
-    H3 title = new H3("Detalles del Grupo");
+    H3 title = new H3("Editar Grupo");
     FormLayout formLayout = new FormLayout();
     
-    TextField nombreField = new TextField("Nombre");
-    nombreField.setValue(grupo.getNombre());
-    nombreField.setReadOnly(true);
+    TextField nombreEdit = new TextField("Nombre");
+    NumberField capacidadEdit = new NumberField("Capacidad");
     
-    NumberField capacidadField = new NumberField("Capacidad");
-    capacidadField.setValue((double) grupo.getCapacidadEstudiantes());
-    capacidadField.setReadOnly(true);
+    nombreEdit.setValue(grupo.getNombre());
+    capacidadEdit.setValue((double) grupo.getCapacidadEstudiantes());
     
-    formLayout.add(nombreField, capacidadField);
+    formLayout.add(nombreEdit, capacidadEdit);
     
-    // Grid de estudiantes
+    // Grid de estudiantes actuales
     H4 estudiantesTitle = new H4("Estudiantes Asignados");
     Grid<Estudiante2> estudiantesGrid = new Grid<>(Estudiante2.class, false);
     estudiantesGrid.addColumn(Estudiante2::getNombre).setHeader("Nombre");
     estudiantesGrid.addColumn(Estudiante2::getApellido).setHeader("Apellido");
     estudiantesGrid.addColumn(Estudiante2::getCarnet).setHeader("Carnet");
+    estudiantesGrid.addComponentColumn(estudiante -> {
+        Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
+        removeButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
+        removeButton.addClickListener(e -> {
+            grupo.getEstudiantes().remove(estudiante);
+            estudiantesGrid.setItems(grupo.getEstudiantes());
+        });
+        return removeButton;
+    }).setHeader("Acciones");
     estudiantesGrid.setItems(grupo.getEstudiantes());
     estudiantesGrid.setHeight("200px");
     
-    // Grid de horarios
+    // Botón para agregar estudiantes
+    Button addEstudiantesButton = new Button("Agregar Estudiantes", 
+        e -> openAddStudentsDialog(grupo, estudiantesGrid));
+    addEstudiantesButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    
+    // Grid de horarios actuales
     H4 horariosTitle = new H4("Horarios Asignados");
     Grid<Horario> horariosGrid = new Grid<>(Horario.class, false);
     horariosGrid.addColumn(horario -> horario.getPeriodo().getNombre()).setHeader("Periodo");
@@ -417,29 +387,129 @@ private void openAddHorariosDialog(Grupo grupo) {
         .setHeader("Profesor");
     horariosGrid.addColumn(Horario::getHoraInicio).setHeader("Hora Inicio");
     horariosGrid.addColumn(Horario::getHoraFin).setHeader("Hora Fin");
+    horariosGrid.addComponentColumn(horario -> {
+        Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
+        removeButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
+        removeButton.addClickListener(e -> {
+            grupo.getHorarios().remove(horario);
+            horariosGrid.setItems(grupo.getHorarios());
+        });
+        return removeButton;
+    }).setHeader("Acciones");
     horariosGrid.setItems(grupo.getHorarios());
     horariosGrid.setHeight("200px");
     
-    // Botón de cerrar
-    Button closeButton = new Button("Cerrar", e -> dialog.close());
-    closeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    // Botón para agregar horarios
+    Button addHorariosButton = new Button("Agregar Horarios", 
+        e -> openAddHorariosDialog(grupo, horariosGrid));
+    addHorariosButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
     
-    mainLayout.add(
+    // Botones de guardar y cancelar
+    Button saveButton = new Button("Guardar", event -> {
+        if (validateEditFields(nombreEdit, capacidadEdit)) {
+            grupo.setNombre(nombreEdit.getValue());
+            grupo.setCapacidadEstudiantes(capacidadEdit.getValue().intValue());
+            
+            try {
+                controller.save(grupo);
+                refreshGrid();
+                dialog.close();
+                Notification.show("Grupo actualizado correctamente")
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception e) {
+                Notification.show("Error: " + e.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        }
+    });
+    saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    
+    Button cancelButton = new Button("Cancelar", event -> dialog.close());
+    
+    // Agregar todo al layout
+    dialogLayout.add(
         title,
         formLayout,
         estudiantesTitle,
         estudiantesGrid,
+        addEstudiantesButton,
         horariosTitle,
         horariosGrid,
-        closeButton
+        addHorariosButton,
+        new HorizontalLayout(saveButton, cancelButton)
     );
     
-    mainLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
-    dialog.add(mainLayout);
-    dialog.setWidth("800px");
+    dialog.add(dialogLayout);
+    dialog.setWidth("1000px");
     dialog.setHeight("800px");
     
     dialog.open();
+}
+
+
+    private void showGrupoDetails(Grupo grupo) {
+        Grupo grupoConDetalles = controller.findByIdWithDetails(grupo.getId());
+
+        Dialog dialog = new Dialog();
+        VerticalLayout mainLayout = new VerticalLayout();
+        
+        // Información básica del grupo
+        H3 title = new H3("Detalles del Grupo");
+        FormLayout formLayout = new FormLayout();
+        
+        TextField nombreField = new TextField("Nombre");
+        nombreField.setValue(grupoConDetalles.getNombre());
+        nombreField.setReadOnly(true);
+        
+        NumberField capacidadField = new NumberField("Capacidad");
+        capacidadField.setValue((double) grupoConDetalles.getCapacidadEstudiantes());
+        capacidadField.setReadOnly(true);
+        
+        formLayout.add(nombreField, capacidadField);
+        
+        // Grid de estudiantes
+        H4 estudiantesTitle = new H4("Estudiantes Asignados");
+        Grid<Estudiante2> estudiantesGrid = new Grid<>(Estudiante2.class, false);
+        estudiantesGrid.addColumn(Estudiante2::getNombre).setHeader("Nombre");
+        estudiantesGrid.addColumn(Estudiante2::getApellido).setHeader("Apellido");
+        estudiantesGrid.addColumn(Estudiante2::getCarnet).setHeader("Carnet");
+        estudiantesGrid.setItems(grupo.getEstudiantes());
+        estudiantesGrid.setHeight("200px");
+        
+        // Grid de horarios
+        H4 horariosTitle = new H4("Horarios Asignados");
+        Grid<Horario> horariosGrid = new Grid<>(Horario.class, false);
+        horariosGrid.addColumn(horario -> horario.getPeriodo().getNombre()).setHeader("Periodo");
+        horariosGrid.addColumn(horario -> horario.getMateria().getNombre()).setHeader("Materia");
+        horariosGrid.addColumn(Horario::getAula).setHeader("Aula");
+        horariosGrid.addColumn(horario -> 
+            horario.getProfesor().getNombre() + " " + horario.getProfesor().getApellido())
+            .setHeader("Profesor");
+        horariosGrid.addColumn(Horario::getHoraInicio).setHeader("Hora Inicio");
+        horariosGrid.addColumn(Horario::getHoraFin).setHeader("Hora Fin");
+        horariosGrid.setItems(grupo.getHorarios());
+        horariosGrid.setHeight("200px");
+        
+        // Botón de cerrar
+        Button closeButton = new Button("Cerrar", e -> dialog.close());
+        closeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        
+        mainLayout.add(
+            title,
+            formLayout,
+            estudiantesTitle,
+            estudiantesGrid,
+            horariosTitle,
+            horariosGrid,
+            closeButton
+        );
+        
+        mainLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
+        dialog.add(mainLayout);
+        dialog.setWidth("800px");
+        dialog.setHeight("800px");
+        
+        dialog.open();
 }
 
     private boolean validateEditFields(TextField nombreEdit, NumberField capacidadEdit) {

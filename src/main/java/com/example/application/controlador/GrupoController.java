@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.FluentQuery.FetchableFluentQuer
 import org.springframework.stereotype.Service;
 import com.example.application.modelo.*;
 
+import jakarta.transaction.Transactional;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,9 +33,29 @@ public class GrupoController implements GrupoRepository{
         return repository.save(grupo);
     }
 
-    @Override
-    public void delete(Grupo entity) {
-        repository.delete(entity);
+    @Transactional
+    public void delete(Grupo grupo) {
+        // Obtenemos el grupo con estudiantes
+        Grupo grupoConEstudiantes = repository.findByIdWithEstudiantes(grupo.getId())
+            .orElseThrow(() -> new IllegalStateException("Grupo no encontrado"));
+        
+        // Obtenemos el grupo con horarios
+        Grupo grupoConHorarios = repository.findByIdWithHorarios(grupo.getId())
+            .orElseThrow(() -> new IllegalStateException("Grupo no encontrado"));
+    
+        // Desvinculamos los estudiantes del grupo
+        grupoConEstudiantes.getEstudiantes().clear();
+        repository.save(grupoConEstudiantes);
+    
+        // Desvinculamos los horarios del grupo
+        for (Horario horario : grupoConHorarios.getHorarios()) {
+            horario.setGrupo(null);
+            horarioRepository.save(horario);
+        }
+        grupoConHorarios.getHorarios().clear();
+        repository.save(grupoConHorarios);
+    
+        repository.delete(grupo);
     }
 
     public List<Grupo> findAll() {
@@ -67,6 +89,12 @@ public class GrupoController implements GrupoRepository{
         
     }
 
+    private boolean tieneMateriaRepetida(Grupo grupo, Horario nuevoHorario) {
+        return grupo.getHorarios().stream()
+                .anyMatch(h -> h.getMateria().getIdMateria().equals(nuevoHorario.getMateria().getIdMateria()));
+    }
+
+
     public void agregarEstudiante(Grupo grupo, Estudiante2 estudiante) {
         // Verificamos que el grupo exista
         Grupo grupoExistente = repository.findByIdWithEstudiantes(grupo.getId())
@@ -90,27 +118,38 @@ public class GrupoController implements GrupoRepository{
     }
 
     public void agregarHorario(Grupo grupo, Horario horario) {
-        // Verificamos que el grupo exista
-        Grupo grupoExistente = repository.findByIdWithHorarios(grupo.getId())
+        // Primero obtener las entidades frescas de la base de datos
+        Horario horarioFromDb = horarioRepository.findById(horario.getId())
+            .orElseThrow(() -> new IllegalStateException("Horario no encontrado"));
+        
+        Grupo grupoFromDb = repository.findByIdWithHorarios(grupo.getId())
             .orElseThrow(() -> new IllegalStateException("Grupo no encontrado"));
         
         // Verificar que el horario no esté ya en el grupo
-        if (grupoExistente.getHorarios().contains(horario)) {
+        if (grupoFromDb.getHorarios().contains(horarioFromDb)) {
             throw new IllegalStateException("El horario ya está asignado a este grupo");
         }
-        
+     
+        // Verificar si la materia ya está asignada al grupo
+        if (tieneMateriaRepetida(grupoFromDb, horarioFromDb)) {
+            throw new IllegalStateException("El grupo ya tiene un horario asignado para la materia " + 
+                horarioFromDb.getMateria().getNombre());
+        }
+
         // Verificar conflictos de horario
-        if (tieneConflictoHorario(grupoExistente, horario)) {
+        if (tieneConflictoHorario(grupoFromDb, horarioFromDb)) {
             throw new IllegalStateException("Existe un conflicto con otro horario del grupo");
         }
         
-        // Agregar el horario al grupo
-        grupoExistente.getHorarios().add(horario);
+        // Establecer la relación bidireccional
+        horarioFromDb.setGrupo(grupoFromDb);
+        grupoFromDb.getHorarios().add(horarioFromDb);
         
-        // Guardar los cambios
-        repository.save(grupoExistente);
+        // Guardar ambas entidades
+        horarioRepository.save(horarioFromDb);
+        repository.save(grupoFromDb);
     }
-    
+
     private boolean tieneConflictoHorario(Grupo grupo, Horario nuevoHorario) {
         return grupo.getHorarios().stream()
                 .anyMatch(h -> h.getDia().equals(nuevoHorario.getDia()) &&
@@ -118,19 +157,15 @@ public class GrupoController implements GrupoRepository{
                              !h.getHoraInicio().isAfter(nuevoHorario.getHoraFin()));
     }
 
-    public Optional<Grupo> findByIdWithDetails(Long id) {
-        Optional<Grupo> grupoConEstudiantes = repository.findByIdWithEstudiantes(id);
-        if (grupoConEstudiantes.isEmpty()) {
-            return Optional.empty();
-        }
+    public Grupo findByIdWithDetails(Long id) {
+        Grupo grupoConEstudiantes = repository.findByIdWithEstudiantes(id)
+            .orElseThrow(() -> new IllegalStateException("Grupo no encontrado"));
         
-        Optional<Grupo> grupoConHorarios = repository.findByIdWithHorarios(id);
-        if (grupoConHorarios.isEmpty()) {
-            return Optional.empty();
-        }
+        Grupo grupoConHorarios = repository.findByIdWithHorarios(id)
+            .orElseThrow(() -> new IllegalStateException("Grupo no encontrado"));
         
         // Combinar los resultados
-        grupoConEstudiantes.get().setHorarios(grupoConHorarios.get().getHorarios());
+        grupoConEstudiantes.setHorarios(grupoConHorarios.getHorarios());
         
         return grupoConEstudiantes;
     }

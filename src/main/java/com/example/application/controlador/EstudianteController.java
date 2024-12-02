@@ -17,6 +17,11 @@ import org.springframework.stereotype.Service;
 
 import com.example.application.modelo.Estudiante2;
 import com.example.application.modelo.Estudiante2Repository;
+import com.example.application.modelo.Grupo;
+import com.example.application.modelo.GrupoRepository;
+import com.example.application.modelo.Horario;
+
+import jakarta.transaction.Transactional;
 
 
 @Service
@@ -25,6 +30,7 @@ public class EstudianteController implements Estudiante2Repository {
 
     @Autowired
     private Estudiante2Repository repository;
+
 
     @Override
     public void flush() {
