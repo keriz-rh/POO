@@ -9,6 +9,7 @@ import com.example.application.modelo.PeriodoRepository;
 import com.example.application.modelo.Grupo;
 import com.example.application.modelo.GrupoRepository;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
@@ -24,6 +25,8 @@ import com.vaadin.flow.router.Route;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.html.Div;
 
@@ -32,7 +35,7 @@ import java.util.List;
 
 @PageTitle("Educantrol - Asistencia")
 @Route(value = "Asistencia", layout = MainLayout.class)
-public class AsistenciaFormView extends VerticalLayout {
+public class AsistenciaFormView extends Composite<VerticalLayout> {
 
     private final AsistenciaRepository asistenciaRepository;
 
@@ -93,9 +96,26 @@ public class AsistenciaFormView extends VerticalLayout {
     private void configurarLayout() {
         // Título
         H3 titulo = new H3("Gestión de Asistencia");
+    
+        // Layout principal que contendrá todo
+        VerticalLayout layoutColumn2 = new VerticalLayout();
+        layoutColumn2.setWidth("100%");
+        layoutColumn2.setMaxWidth("800px");
+    
+        // Configuración del contenedor principal
+        getContent().setWidth("100%");
+        getContent().getStyle().set("flex-grow", "1");
+        getContent().setJustifyContentMode(JustifyContentMode.START);
+        getContent().setAlignItems(Alignment.CENTER);
 
         // Formulario
         FormLayout formLayout = new FormLayout();
+        formLayout.setWidth("100%");
+        formLayout.setResponsiveSteps(
+            new FormLayout.ResponsiveStep("0", 1),
+            new FormLayout.ResponsiveStep("500px", 2)
+        );
+    
         formLayout.add(
             estudianteComboBox,
             periodoComboBox,
@@ -105,20 +125,21 @@ public class AsistenciaFormView extends VerticalLayout {
             guardarButton
         );
 
-        // Agregar campo y botón para buscar asistencia por carnet
-        VerticalLayout searchLayout = new VerticalLayout();
+        // Layout de búsqueda
+        HorizontalLayout searchLayout = new HorizontalLayout();
+        searchLayout.setAlignItems(Alignment.BASELINE);
         searchLayout.add(buscarCarnetField, buscarButton);
 
-        // Layout principal
-        VerticalLayout mainLayout = new VerticalLayout(titulo, formLayout, searchLayout, grid);
-        mainLayout.setWidth("100%");
-        mainLayout.setHeightFull();
-        mainLayout.setAlignItems(Alignment.CENTER); // Centrar los elementos en el layout
-        mainLayout.setPadding(true);  // Añadir padding alrededor del formulario
-        mainLayout.setSpacing(true);  // Añadir espacio entre los componentes
+        // Agregar todo al layout principal
+        layoutColumn2.add(
+         titulo,
+         formLayout,
+         searchLayout,
+         grid
+        );
 
         // Agregar el layout principal al contenido
-        add(mainLayout);
+        getContent().add(layoutColumn2);
     }
 
     private void guardarAsistencia() {
