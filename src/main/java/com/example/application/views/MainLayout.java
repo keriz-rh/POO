@@ -1,6 +1,5 @@
 package com.example.application.views;
 
-
 import com.example.application.views.formProfesor.ProfesorFormView;
 import com.example.application.views.formEstudiante.EstudianteFormView;
 import com.example.application.views.formPago.PagoFormView;
@@ -8,6 +7,7 @@ import com.example.application.views.formPeriodo.PeriodoFormView;
 import com.example.application.views.formHorario.HorarioFormView;
 import com.example.application.views.formMateria.MateriaFormView;
 import com.example.application.views.formGrupo.GrupoFormView;
+import com.example.application.views.formAsistencia.AsistenciaFormView; // Nueva vista agregada
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.html.Footer;
@@ -22,7 +22,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 /**
- * The main view is a top-level placeholder for other views.
+ * La vista principal es un contenedor a nivel superior para otras vistas.
  */
 public class MainLayout extends AppLayout {
 
@@ -57,34 +57,39 @@ public class MainLayout extends AppLayout {
     private SideNav createNavigation() {
         SideNav nav = new SideNav();
 
+        // Elementos de navegación existentes
         nav.addItem(new SideNavItem("Profesores", 
             ProfesorFormView.class, 
             LineAwesomeIcon.CHALKBOARD_TEACHER_SOLID.create()));
             
         nav.addItem(new SideNavItem("Estudiantes", EstudianteFormView.class, LineAwesomeIcon.GRADUATION_CAP_SOLID.create()));
 
-        
         nav.addItem(new SideNavItem("Gestión de Pagos", 
             PagoFormView.class, 
             LineAwesomeIcon.MONEY_BILL_SOLID.create()));  
- 
-
-        nav.addItem(new SideNavItem("Gestión de Horarios", 
-        HorarioFormView.class, 
-        LineAwesomeIcon.CALENDAR_ALT_SOLID.create()));
 
         nav.addItem(new SideNavItem("Gestión de Materias", 
             MateriaFormView.class, 
             LineAwesomeIcon.BOOK_SOLID.create()));           
 
         nav.addItem(new SideNavItem("Gestión de Períodos",
-        com.example.application.views.formPeriodo.PeriodoFormView.class,
+            PeriodoFormView.class,
+            LineAwesomeIcon.CALENDAR_ALT_SOLID.create()));
+
+        nav.addItem(new SideNavItem("Gestión de Horarios", 
+        HorarioFormView.class, 
         LineAwesomeIcon.CALENDAR_ALT_SOLID.create()));
 
+
         nav.addItem(new SideNavItem("Gestión de Grupos", 
-        GrupoFormView.class, 
-        LineAwesomeIcon.USERS_SOLID.create()));
-                  
+            GrupoFormView.class, 
+            LineAwesomeIcon.USERS_SOLID.create()));
+
+        // Nueva entrada para la vista de Asistencia
+        nav.addItem(new SideNavItem("Gestión de Asistencias", 
+            AsistenciaFormView.class, 
+            LineAwesomeIcon.CHECK_CIRCLE_SOLID.create()));
+
         return nav;
     }
 

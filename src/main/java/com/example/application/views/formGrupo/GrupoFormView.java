@@ -378,7 +378,7 @@ private void openAddHorariosDialog(Grupo grupo) {
     }
 
     private void showGrupoDetails(Grupo grupo) {
-    Grupo grupoConDetalles = controller.findByIdWithDetails(grupo.getId());
+    Optional<Grupo> grupoConDetalles = controller.findByIdWithDetails(grupo.getId());
 
     Dialog dialog = new Dialog();
     VerticalLayout mainLayout = new VerticalLayout();
