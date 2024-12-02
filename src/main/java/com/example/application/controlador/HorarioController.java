@@ -1,9 +1,7 @@
 package com.example.application.controlador;
 
-import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -20,11 +18,8 @@ import org.springframework.stereotype.Service;
 import com.example.application.modelo.Horario;
 import com.example.application.modelo.HorarioRepository;
 import com.example.application.modelo.Materia;
-import com.example.application.modelo.MateriaRepository;
 import com.example.application.modelo.Periodo;
-import com.example.application.modelo.PeriodoRepository;
 import com.example.application.modelo.Profesor2;
-import com.example.application.modelo.Profesor2Repository;
 
 
 
@@ -33,15 +28,6 @@ public class HorarioController implements HorarioRepository {
 
     @Autowired
     private HorarioRepository repository;
-
-    @Autowired
-    private MateriaRepository materiaRepository;
-
-    @Autowired 
-    private Profesor2Repository profesorRepository;
-
-    @Autowired
-    private PeriodoRepository periodoRepository;
 
     @Override
     public void flush() {
@@ -133,6 +119,7 @@ public class HorarioController implements HorarioRepository {
         throw new UnsupportedOperationException("Unimplemented method 'findAllById'");
     }
 
+    @SuppressWarnings("unchecked")
     public Horario save(Horario horario) {
         // Validar que el periodo esté activo
         if (!horario.getPeriodo().getActivo()) {

@@ -1,6 +1,5 @@
 package com.example.application.modelo;
 
-import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 

@@ -1,7 +1,6 @@
 package com.example.application.controlador;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -17,11 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.application.modelo.Estudiante2;
 import com.example.application.modelo.Estudiante2Repository;
-import com.example.application.modelo.Grupo;
-import com.example.application.modelo.GrupoRepository;
-import com.example.application.modelo.Horario;
 
-import jakarta.transaction.Transactional;
 
 
 @Service

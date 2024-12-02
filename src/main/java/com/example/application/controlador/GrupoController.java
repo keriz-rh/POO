@@ -11,7 +11,6 @@ import com.example.application.modelo.*;
 
 import jakarta.transaction.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -20,15 +19,13 @@ import java.util.function.Function;
 public class GrupoController implements GrupoRepository{
     
     @Autowired
-    private Estudiante2Repository estudianteRepository;
-
-    @Autowired
     private GrupoRepository repository;
     
     @Autowired
     private HorarioRepository horarioRepository;
     
     // Métodos CRUD básicos con validaciones
+    @SuppressWarnings("unchecked")
     public Grupo save(Grupo grupo) {
         return repository.save(grupo);
     }
@@ -77,18 +74,6 @@ public class GrupoController implements GrupoRepository{
     }
     
     
-    // Métodos de validación privados
-    private void validarGrupo(Grupo grupo) {
-        if (repository.existeNombreDuplicado(grupo.getNombre(), grupo.getId() != null ? grupo.getId() : 0L)) {
-            throw new IllegalStateException("Ya existe un grupo con este nombre");
-        }
-        
-        if (grupo.getCapacidadEstudiantes() <= 0) {
-            throw new IllegalStateException("La capacidad del grupo debe ser mayor a 0");
-        }
-        
-    }
-
     private boolean tieneMateriaRepetida(Grupo grupo, Horario nuevoHorario) {
         return grupo.getHorarios().stream()
                 .anyMatch(h -> h.getMateria().getIdMateria().equals(nuevoHorario.getMateria().getIdMateria()));

@@ -3,28 +3,40 @@ package com.example.application.modelo;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import java.time.LocalDate;
-@Entity  // Indica que esta clase es una entidad JPA
+
+@Entity
 public class Asistencia {
-    
-    @Id  // Marca la propiedad id como la clave primaria
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Generación automática del id
     private Long id;
 
-    @ManyToOne  // Indica que 'estudiante' es una relación muchos a uno con la entidad Estudiante2
+    @ManyToOne
     private Estudiante2 estudiante;   // Estudiante al que pertenece la asistencia
     
-    @ManyToOne  // Indica que 'grupo' es una relación muchos a uno con la entidad Grupo
+    @ManyToOne
     private Grupo grupo;              // Grupo al que pertenece el estudiante
-    
+
+    @ManyToOne
+    private Periodo periodo;          // Periodo al que pertenece la asistencia
+
     private LocalDate fecha;          // Fecha de la asistencia
     private boolean presente;         // Estado de la asistencia (presente o ausente)
 
-    // Constructor
-    public Asistencia(Estudiante2 estudiante, Grupo grupo, LocalDate fecha, boolean presente) {
+    // Constructor completo
+    public Asistencia(Estudiante2 estudiante, Grupo grupo, Periodo periodo, LocalDate fecha, boolean presente) {
         this.estudiante = estudiante;
         this.grupo = grupo;
+        this.periodo = periodo;
         this.fecha = fecha;
         this.presente = presente;
+    }
+
+    // Constructor vacío para JPA (si es necesario para persistencia)
+    public Asistencia() {
     }
 
     // Métodos getter y setter
@@ -52,6 +64,14 @@ public class Asistencia {
         this.grupo = grupo;
     }
 
+    public Periodo getPeriodo() {
+        return periodo;
+    }
+
+    public void setPeriodo(Periodo periodo) {
+        this.periodo = periodo;
+    }
+
     public LocalDate getFecha() {
         return fecha;
     }
@@ -67,21 +87,17 @@ public class Asistencia {
     public void setPresente(boolean presente) {
         this.presente = presente;
     }
-    
+
     @Override
     public String toString() {
         return "Asistencia{" +
                "id=" + id +
-               ", estudiante=" + estudiante.getNombre() +  // Suponiendo que Estudiante tiene un método getNombre()
-               ", grupo=" + grupo.getNombre() +            // Suponiendo que Grupo tiene un método getNombre()
+               ", estudiante=" + (estudiante != null ? estudiante.getNombre() : "N/A") +
+               ", grupo=" + (grupo != null ? grupo.getNombre() : "N/A") +
+               ", periodo=" + (periodo != null ? periodo.getNombre() : "N/A") +
                ", fecha=" + fecha +
                ", presente=" + presente +
                '}';
     }
 
-    // Este método parece estar incompleto, puede que no sea necesario
-    public void setEstado(String estado) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setEstado'");
-    }
 }

@@ -470,17 +470,6 @@ public class HorarioFormView extends Composite<VerticalLayout> {
         horariosGrid.setItems(controller.findByAula(aulaField.getValue()));
     }
 
-    private void filtrarPorRango() {
-        if (horaInicioField.isEmpty() || horaFinField.isEmpty()) {
-            Notification.show("Por favor, seleccione el rango horario completo")
-                .addThemeVariants(NotificationVariant.LUMO_ERROR);
-            return;
-        }
-        LocalTime inicio = horaInicioField.getValue();
-        LocalTime fin = horaFinField.getValue();
-        horariosGrid.setItems(controller.findByRangoHorario(inicio, fin));
-    }
-
     private void filtrarPorProfesor() {
         if (profesorField.isEmpty()) {
             Notification.show("Por favor, seleccione un profesor para filtrar")

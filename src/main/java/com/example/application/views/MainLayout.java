@@ -86,7 +86,7 @@ public class MainLayout extends AppLayout {
             LineAwesomeIcon.USERS_SOLID.create()));
 
         // Nueva entrada para la vista de Asistencia
-        nav.addItem(new SideNavItem("Gestión de Asistencias", 
+        nav.addItem(new SideNavItem("Control de Asistencias", 
             AsistenciaFormView.class, 
             LineAwesomeIcon.CHECK_CIRCLE_SOLID.create()));
 

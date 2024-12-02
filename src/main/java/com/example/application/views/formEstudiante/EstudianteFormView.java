@@ -1,7 +1,6 @@
 package com.example.application.views.formEstudiante;
 import java.time.LocalDate;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import com.example.application.controlador.EstudianteController;
 import com.example.application.modelo.Estudiante2;
 import com.example.application.views.MainLayout;

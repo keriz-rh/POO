@@ -1,10 +1,8 @@
 package com.example.application.modelo;
 
-import java.util.List;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.ArrayList;
 
 
 @Entity

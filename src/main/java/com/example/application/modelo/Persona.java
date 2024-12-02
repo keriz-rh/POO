@@ -1,6 +1,5 @@
 package com.example.application.modelo;
 
-import org.checkerframework.checker.units.qual.C;
 
 import jakarta.persistence.*;
 
