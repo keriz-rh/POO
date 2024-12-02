@@ -39,9 +39,9 @@ public class Horario {
     @JoinColumn(name = "periodo_id", nullable = false)
     private Periodo periodo;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "grupo_id")
-    private Grupo grupo;
+    private Grupo grupo; 
 
     // Constructor vacío
     public Horario() {}
@@ -113,7 +113,7 @@ public class Horario {
     public Grupo getGrupo() {
         return grupo;
     }
-
+    
     public void setGrupo(Grupo grupo) {
         this.grupo = grupo;
     }

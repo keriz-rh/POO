@@ -34,6 +34,9 @@ public class Estudiante2 extends Persona {
     @OneToMany(mappedBy = "estudiante", cascade = CascadeType.ALL)
     private List<Pago> pagos = new ArrayList<>();
 
+    @ManyToMany(mappedBy = "estudiantes", fetch = FetchType.EAGER)
+    private List<Grupo> grupos = new ArrayList<>();
+
     // Getters y Setters
     public String getNivelAcademico() {
         return nivelAcademico;
@@ -82,5 +85,13 @@ public class Estudiante2 extends Persona {
 
     public void setFoto(byte[] foto) {
         this.foto = foto;
+    }
+
+    public List<Grupo> getGrupos() {
+        return grupos;
+    }
+
+    public void setGrupos(List<Grupo> grupos) {
+        this.grupos = grupos;
     }
 }

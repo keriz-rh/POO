@@ -15,7 +15,7 @@ public interface GrupoRepository extends JpaRepository<Grupo, Long> {
     List<Grupo> findAllBasicInfo();
 
     @Query("SELECT g FROM Grupo g LEFT JOIN FETCH g.estudiantes LEFT JOIN FETCH g.horarios WHERE g.id = :id")
-    Optional<Grupo> findByIdWithDetails(@Param("id") Long id);
+    Grupo findByIdWithDetails(@Param("id") Long id);
 
     List<Grupo> findByNombreContainingIgnoreCase(String nombre);
     

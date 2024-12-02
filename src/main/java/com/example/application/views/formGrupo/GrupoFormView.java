@@ -378,68 +378,69 @@ private void openAddHorariosDialog(Grupo grupo) {
     }
 
     private void showGrupoDetails(Grupo grupo) {
-    Grupo grupoConDetalles = controller.findByIdWithDetails(grupo.getId());
+        Grupo grupoConDetalles = controller.findByIdWithDetails(grupo.getId());
 
-    Dialog dialog = new Dialog();
-    VerticalLayout mainLayout = new VerticalLayout();
-    
-    // Información básica del grupo
-    H3 title = new H3("Detalles del Grupo");
-    FormLayout formLayout = new FormLayout();
-    
-    TextField nombreField = new TextField("Nombre");
-    nombreField.setValue(grupo.getNombre());
-    nombreField.setReadOnly(true);
-    
-    NumberField capacidadField = new NumberField("Capacidad");
-    capacidadField.setValue((double) grupo.getCapacidadEstudiantes());
-    capacidadField.setReadOnly(true);
-    
-    formLayout.add(nombreField, capacidadField);
-    
-    // Grid de estudiantes
-    H4 estudiantesTitle = new H4("Estudiantes Asignados");
-    Grid<Estudiante2> estudiantesGrid = new Grid<>(Estudiante2.class, false);
-    estudiantesGrid.addColumn(Estudiante2::getNombre).setHeader("Nombre");
-    estudiantesGrid.addColumn(Estudiante2::getApellido).setHeader("Apellido");
-    estudiantesGrid.addColumn(Estudiante2::getCarnet).setHeader("Carnet");
-    estudiantesGrid.setItems(grupo.getEstudiantes());
-    estudiantesGrid.setHeight("200px");
-    
-    // Grid de horarios
-    H4 horariosTitle = new H4("Horarios Asignados");
-    Grid<Horario> horariosGrid = new Grid<>(Horario.class, false);
-    horariosGrid.addColumn(horario -> horario.getPeriodo().getNombre()).setHeader("Periodo");
-    horariosGrid.addColumn(horario -> horario.getMateria().getNombre()).setHeader("Materia");
-    horariosGrid.addColumn(Horario::getAula).setHeader("Aula");
-    horariosGrid.addColumn(horario -> 
-        horario.getProfesor().getNombre() + " " + horario.getProfesor().getApellido())
-        .setHeader("Profesor");
-    horariosGrid.addColumn(Horario::getHoraInicio).setHeader("Hora Inicio");
-    horariosGrid.addColumn(Horario::getHoraFin).setHeader("Hora Fin");
-    horariosGrid.setItems(grupo.getHorarios());
-    horariosGrid.setHeight("200px");
-    
-    // Botón de cerrar
-    Button closeButton = new Button("Cerrar", e -> dialog.close());
-    closeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-    
-    mainLayout.add(
-        title,
-        formLayout,
-        estudiantesTitle,
-        estudiantesGrid,
-        horariosTitle,
-        horariosGrid,
-        closeButton
-    );
-    
-    mainLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
-    dialog.add(mainLayout);
-    dialog.setWidth("800px");
-    dialog.setHeight("800px");
-    
-    dialog.open();
+
+        Dialog dialog = new Dialog();
+        VerticalLayout mainLayout = new VerticalLayout();
+        
+        // Información básica del grupo
+        H3 title = new H3("Detalles del Grupo");
+        FormLayout formLayout = new FormLayout();
+        
+        TextField nombreField = new TextField("Nombre");
+        nombreField.setValue(grupoConDetalles.getNombre());
+        nombreField.setReadOnly(true);
+        
+        NumberField capacidadField = new NumberField("Capacidad");
+        capacidadField.setValue((double) grupoConDetalles.getCapacidadEstudiantes());
+        capacidadField.setReadOnly(true);
+        
+        formLayout.add(nombreField, capacidadField);
+        
+        // Grid de estudiantes
+        H4 estudiantesTitle = new H4("Estudiantes Asignados");
+        Grid<Estudiante2> estudiantesGrid = new Grid<>(Estudiante2.class, false);
+        estudiantesGrid.addColumn(Estudiante2::getNombre).setHeader("Nombre");
+        estudiantesGrid.addColumn(Estudiante2::getApellido).setHeader("Apellido");
+        estudiantesGrid.addColumn(Estudiante2::getCarnet).setHeader("Carnet");
+        estudiantesGrid.setItems(grupo.getEstudiantes());
+        estudiantesGrid.setHeight("200px");
+        
+        // Grid de horarios
+        H4 horariosTitle = new H4("Horarios Asignados");
+        Grid<Horario> horariosGrid = new Grid<>(Horario.class, false);
+        horariosGrid.addColumn(horario -> horario.getPeriodo().getNombre()).setHeader("Periodo");
+        horariosGrid.addColumn(horario -> horario.getMateria().getNombre()).setHeader("Materia");
+        horariosGrid.addColumn(Horario::getAula).setHeader("Aula");
+        horariosGrid.addColumn(horario -> 
+            horario.getProfesor().getNombre() + " " + horario.getProfesor().getApellido())
+            .setHeader("Profesor");
+        horariosGrid.addColumn(Horario::getHoraInicio).setHeader("Hora Inicio");
+        horariosGrid.addColumn(Horario::getHoraFin).setHeader("Hora Fin");
+        horariosGrid.setItems(grupo.getHorarios());
+        horariosGrid.setHeight("200px");
+        
+        // Botón de cerrar
+        Button closeButton = new Button("Cerrar", e -> dialog.close());
+        closeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        
+        mainLayout.add(
+            title,
+            formLayout,
+            estudiantesTitle,
+            estudiantesGrid,
+            horariosTitle,
+            horariosGrid,
+            closeButton
+        );
+        
+        mainLayout.setDefaultHorizontalComponentAlignment(Alignment.CENTER);
+        dialog.add(mainLayout);
+        dialog.setWidth("800px");
+        dialog.setHeight("800px");
+        
+        dialog.open();
 }
 
     private boolean validateEditFields(TextField nombreEdit, NumberField capacidadEdit) {

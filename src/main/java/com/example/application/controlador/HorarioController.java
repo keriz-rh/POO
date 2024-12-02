@@ -291,5 +291,11 @@ public class HorarioController implements HorarioRepository {
         throw new UnsupportedOperationException("Unimplemented method 'existeConflictoHorario'");
     }
 
+    @Override
+    public List<Horario> findByGrupoId(Long grupoId) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'findByGrupoId'");
+    }
+
 
 }

@@ -22,7 +22,7 @@ public class Grupo {
     @Column(nullable= false)
     private int capacidadEstudiantes;
     
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "grupo_estudiante",
         joinColumns = @JoinColumn(name = "grupo_id"),
@@ -30,7 +30,7 @@ public class Grupo {
     )
     private List<Estudiante2> estudiantes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "grupo", fetch = FetchType.EAGER)
     private List<Horario> horarios = new ArrayList<>();
 
     // Constructor
