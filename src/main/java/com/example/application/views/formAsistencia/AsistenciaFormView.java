@@ -11,6 +11,7 @@ import com.example.application.modelo.GrupoRepository;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -18,11 +19,12 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.StreamResource;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -31,16 +33,14 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
+
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
@@ -127,7 +127,7 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
         getContent().getStyle().set("flex-grow", "1");
         getContent().setJustifyContentMode(JustifyContentMode.START);
         getContent().setAlignItems(Alignment.CENTER);
-
+    
         // Formulario
         FormLayout formLayout = new FormLayout();
         formLayout.setWidth("100%");
@@ -144,23 +144,30 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
             estadoRadioGroup,
             guardarButton
         );
-
+    
+        // Crear contenedor para el grid que ocupe el 100% de la ventana
+        Div gridContainer = new Div(grid);
+        gridContainer.setWidthFull(); // Asegura que el contenedor ocupe todo el ancho disponible
+        grid.setWidthFull(); // Esto hace que el Grid ocupe todo el ancho disponible
+    
         // Layout de búsqueda
         HorizontalLayout searchLayout = new HorizontalLayout();
         searchLayout.setAlignItems(Alignment.BASELINE);
         searchLayout.add(buscarCarnetField, buscarButton, exportarPdfButton);
-
+    
         // Agregar todo al layout principal
         layoutColumn2.add(
-         titulo,
-         formLayout,
-         searchLayout,
-         grid
+            titulo,
+            formLayout,
+            searchLayout,
+            gridContainer // El Grid ocupará el espacio restante
         );
-
+    
         // Agregar el layout principal al contenido
         getContent().add(layoutColumn2);
     }
+    
+
 
     private void guardarAsistencia() {
         // Obtener los valores de los campos
@@ -244,7 +251,136 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
             notification.open();
         }
     }
+    
+    private void editarAsistencia(Asistencia asistencia) {
+        // Crear un diálogo de confirmación
+        Dialog confirmDialog = new Dialog();
+        confirmDialog.setHeaderTitle("Confirmación de edición");
+    
+        // Mensaje dentro del diálogo
+        @SuppressWarnings("deprecation")
+        Label mensaje = new Label("¿Estás seguro de que deseas editar esta asistencia?");
+        confirmDialog.add(mensaje);
+    
+        // Botón para confirmar la edición
+        Button confirmarButton = new Button("Continuar", event -> {
+            // Llenar el formulario con los datos de la asistencia seleccionada
+            estudianteComboBox.setValue(asistencia.getEstudiante());
+            periodoComboBox.setValue(asistencia.getPeriodo());
+            grupoComboBox.setValue(asistencia.getGrupo());
+            fechaDatePicker.setValue(asistencia.getFecha());
+            estadoRadioGroup.setValue(asistencia.isPresente() ? "Presente" : "Ausente");
+    
+            // Cambiar el texto del botón "Guardar" a "Actualizar"
+            guardarButton.setText("Actualizar");
+    
+            // Añadir el evento de clic para actualizar la asistencia
+            guardarButton.addClickListener(guardarEvent -> {
+                // Validaciones necesarias antes de actualizar
+                if (validarFormulario()) {
+                    asistencia.setEstudiante(estudianteComboBox.getValue());
+                    asistencia.setPeriodo(periodoComboBox.getValue());
+                    asistencia.setGrupo(grupoComboBox.getValue());
+                    asistencia.setFecha(fechaDatePicker.getValue());
+                    asistencia.setPresente(estadoRadioGroup.getValue().equals("Presente"));
+    
+                    try {
+                        asistenciaRepository.save(asistencia);
+                        Notification.show("Asistencia actualizada con éxito.");
+                        limpiarFormulario();
+                        actualizarGrid();
+                        guardarButton.setText("Guardar"); // Volver a su estado original
+                    } catch (Exception e) {
+                        Notification.show("Error al actualizar la asistencia: " + e.getMessage());
+                    }
+                }
+            });
+    
+            confirmDialog.close();
+        });
+        confirmarButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    
+        // Botón para cancelar la acción
+        Button cancelarButton = new Button("Cancelar", event -> confirmDialog.close());
+        cancelarButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+    
+        // Contenedor para los botones
+        HorizontalLayout buttonsLayout = new HorizontalLayout(confirmarButton, cancelarButton);
+        buttonsLayout.setJustifyContentMode(JustifyContentMode.END);
+    
+        // Añadir los botones al diálogo
+        confirmDialog.getFooter().add(buttonsLayout);
+    
+        // Abrir el diálogo
+        confirmDialog.open();
+    }
+    
+    
+private void borrarAsistencia(Asistencia asistencia) {
+    // Crear un diálogo de confirmación
+    Dialog confirmDialog = new Dialog();
+    confirmDialog.setHeaderTitle("Confirmación de eliminación");
 
+    // Mensaje dentro del diálogo
+    @SuppressWarnings("deprecation")
+    Label mensaje = new Label("¿Estás seguro de que deseas eliminar esta asistencia?");
+    confirmDialog.add(mensaje);
+
+    // Botón para confirmar la eliminación
+    Button confirmarButton = new Button("Eliminar", event -> {
+        try {
+            asistenciaRepository.delete(asistencia);
+            Notification.show("Asistencia eliminada con éxito.");
+            actualizarGrid();
+        } catch (Exception e) {
+            Notification.show("Error al eliminar la asistencia: " + e.getMessage());
+        } finally {
+            confirmDialog.close();
+        }
+    });
+    confirmarButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+    // Botón para cancelar la acción
+    Button cancelarButton = new Button("Cancelar", event -> confirmDialog.close());
+    cancelarButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+    // Contenedor para los botones
+    HorizontalLayout buttonsLayout = new HorizontalLayout(confirmarButton, cancelarButton);
+    buttonsLayout.setJustifyContentMode(JustifyContentMode.END);
+
+    // Añadir los botones al diálogo
+    confirmDialog.getFooter().add(buttonsLayout);
+
+    // Abrir el diálogo
+    confirmDialog.open();
+}
+
+    
+    // Validar formulario
+    private boolean validarFormulario() {
+        if (estudianteComboBox.isEmpty()) {
+            Notification.show("Selecciona un estudiante.");
+            return false;
+        }
+        if (periodoComboBox.isEmpty()) {
+            Notification.show("Selecciona un periodo.");
+            return false;
+        }
+        if (grupoComboBox.isEmpty()) {
+            Notification.show("Selecciona un grupo.");
+            return false;
+        }
+        if (fechaDatePicker.isEmpty()) {
+            Notification.show("Selecciona una fecha.");
+            return false;
+        }
+        if (estadoRadioGroup.isEmpty()) {
+            Notification.show("Selecciona el estado de la asistencia.");
+            return false;
+        }
+        return true;
+    }
+    
     private void exportarAsistenciaAPdf() {
         // Capturar la referencia de UI actual antes de iniciar el hilo
         UI ui = UI.getCurrent();
@@ -380,24 +516,23 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
                 : "No disponible")
             .setHeader("Estudiante")
             .setSortable(true);
-
+    
         grid.addColumn(asistencia -> asistencia.getGrupo() != null
                 ? asistencia.getGrupo().getNombre()
                 : "No disponible")
             .setHeader("Grupo")
             .setSortable(true);
-
+    
         grid.addColumn(asistencia -> asistencia.getPeriodo() != null 
                 ? asistencia.getPeriodo().getNombre()
                 : "No disponible")
             .setHeader("Periodo")
             .setSortable(true);
-
+    
         grid.addColumn(Asistencia::getFecha)
             .setHeader("Fecha")
             .setSortable(true);
-
-        // Cambiar color de la celda basado en el estado
+    
         grid.addColumn(new ComponentRenderer<>(asistencia -> {
             Div div = new Div();
             if (asistencia.isPresente()) {
@@ -410,9 +545,24 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
             return div;
         })).setHeader("Estado")
           .setSortable(true);
-    }
-
-    @Override
+    
+        // Columna para editar
+        grid.addColumn(new ComponentRenderer<>(asistencia -> {
+            Button editButton = new Button("Editar");
+            editButton.addClickListener(event -> editarAsistencia(asistencia));
+                        return editButton;
+                    })).setHeader("Editar");
+                
+                    // Columna para borrar
+                    grid.addColumn(new ComponentRenderer<>(asistencia -> {
+                        Button deleteButton = new Button("Borrar");
+                        deleteButton.getStyle().set("color", "red");
+                        deleteButton.addClickListener(event -> borrarAsistencia(asistencia));
+                                    return deleteButton;
+                                })).setHeader("Borrar");
+                            }
+            
+                @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         configurarGrid();
