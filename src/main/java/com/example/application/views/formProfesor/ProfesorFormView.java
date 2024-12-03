@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import org.apache.commons.io.IOUtils;
 
@@ -226,8 +228,9 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
             Notification.show("Ya hay una importación en proceso");
             return;
         }
-
+    
         importacionEnProceso.set(true);
+        final UI ui = UI.getCurrent(); // Capturamos la UI actual
         
         hiloImportacion = new Thread(() -> {
             try {
@@ -236,58 +239,97 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
                 Sheet hoja = libroExcel.getSheetAt(0);
                 
                 int totalFilas = hoja.getPhysicalNumberOfRows() - 1;
-                int filaActual = 0;
+                AtomicInteger filaActual = new AtomicInteger(0);
                 
                 for (Row fila : hoja) {
                     if (!importacionEnProceso.get()) {
-                        UI.getCurrent().access(() -> {
-                            Notification.show("Importación cancelada");
-                            limpiarImportacion();
-                        });
+                        if (ui != null) {
+                            ui.access(() -> {
+                                Notification.show("Importación cancelada");
+                                limpiarImportacion();
+                            });
+                        }
                         return;
                     }
-
+    
                     if (fila.getRowNum() == 0) continue;
                     
-                    Profesor2 profesor = new Profesor2();
-                    profesor.setNombre(obtenerValorCeldaComoTexto(fila.getCell(0)));
-                    profesor.setApellido(obtenerValorCeldaComoTexto(fila.getCell(1)));
-                    profesor.setEdad(obtenerValorCeldaComoNumero(fila.getCell(2)));
-                    profesor.setTelefono(obtenerValorCeldaComoTexto(fila.getCell(3)));
-                    profesor.setDireccion(obtenerValorCeldaComoTexto(fila.getCell(4)));
-                    profesor.setEspecialidad(obtenerValorCeldaComoTexto(fila.getCell(5)));
+                    try {
+                        Profesor2 profesor = new Profesor2();
+                        
+                        profesor.setNombre(obtenerValorCeldaComoTexto(fila.getCell(0)));
+                        profesor.setApellido(obtenerValorCeldaComoTexto(fila.getCell(1)));
+                        profesor.setEdad(obtenerValorCeldaComoNumero(fila.getCell(2)));
+                        profesor.setTelefono(obtenerValorCeldaComoTexto(fila.getCell(3)));
+                        profesor.setDireccion(obtenerValorCeldaComoTexto(fila.getCell(4)));
+                        profesor.setEspecialidad(obtenerValorCeldaComoTexto(fila.getCell(5)));
+                        
+                        if (profesor.getNombre() == null || profesor.getNombre().trim().isEmpty() ||
+                            profesor.getApellido() == null || profesor.getApellido().trim().isEmpty() ||
+                            profesor.getEspecialidad() == null || profesor.getEspecialidad().trim().isEmpty()) {
+                            throw new IllegalArgumentException("Los campos nombre, apellido y especialidad son obligatorios");
+                        }
+                        
+                        profesores.add(profesor);
+                        
+                        final int currentRow = filaActual.incrementAndGet();
+                        final double progreso = (double) currentRow / totalFilas;
+                        
+                        if (ui != null) {
+                            ui.access(() -> {
+                                actualizarProgreso(progreso);
+                                if (currentRow % 10 == 0) {
+                                    Notification.show("Procesando fila " + currentRow + " de " + totalFilas);
+                                }
+                            });
+                        }
+                        
+                    } catch (Exception e) {
+                        final int errorRow = filaActual.get() + 1;
+                        if (ui != null) {
+                            ui.access(() -> {
+                                Notification.show("Error en la fila " + errorRow + ": " + e.getMessage(),
+                                        3000, Notification.Position.MIDDLE);
+                            });
+                        }
+                    }
                     
-                    profesores.add(profesor);
-                    
-                    filaActual++;
-                    final double progreso = (double) filaActual / totalFilas;
-                    
-                    UI.getCurrent().access(() -> actualizarProgreso(progreso));
-                    
-                    Thread.sleep(100);
+                    Thread.sleep(50);
                 }
                 
                 libroExcel.close();
                 inputStream.close();
                 
-                UI.getCurrent().access(() -> {
-                    try {
-                        profesores.forEach(controller::save);
-                        Notification.show("Importación completada: " + profesores.size() + " profesores importados");
-                        refreshGrid();
-                    } catch (Exception e) {
-                        Notification.show("Error al guardar los profesores: " + e.getMessage());
-                    } finally {
-                        limpiarImportacion();
-                    }
-                });
+                if (ui != null) {
+                    ui.access(() -> {
+                        try {
+                            if (!profesores.isEmpty()) {
+                                profesores.forEach(profesor -> {
+                                    try {
+                                        controller.save(profesor);
+                                    } catch (Exception e) {
+                                        Notification.show("Error al guardar profesor: " + e.getMessage());
+                                    }
+                                });
+                                Notification.show("Importación completada: " + profesores.size() + " profesores importados");
+                                refreshGrid();
+                            } else {
+                                Notification.show("No se encontraron datos válidos para importar");
+                            }
+                        } finally {
+                            limpiarImportacion();
+                        }
+                    });
+                }
                 
             } catch (Exception e) {
-                UI.getCurrent().access(() -> {
-                    Notification.show("Error en la importación: " + e.getMessage(), 
-                                    3000, Notification.Position.MIDDLE);
-                    limpiarImportacion();
-                });
+                if (ui != null) {
+                    ui.access(() -> {
+                        Notification.show("Error en la importación: " + e.getMessage(), 
+                                        3000, Notification.Position.MIDDLE);
+                        limpiarImportacion();
+                    });
+                }
             }
         });
         
@@ -317,9 +359,11 @@ private void limpiarImportacion() {
         
         switch (celda.getCellType()) {
             case STRING:
-                return celda.getStringCellValue();
+                return celda.getStringCellValue().trim();
             case NUMERIC:
-                return String.valueOf((int) celda.getNumericCellValue());
+                return String.valueOf((int) celda.getNumericCellValue()).trim();
+            case BLANK:
+                return "";
             default:
                 return "";
         }
@@ -333,7 +377,8 @@ private void limpiarImportacion() {
                 return celda.getNumericCellValue();
             case STRING:
                 try {
-                    return Double.parseDouble(celda.getStringCellValue());
+                    String valor = celda.getStringCellValue().trim();
+                    return valor.isEmpty() ? 0.0 : Double.parseDouble(valor);
                 } catch (NumberFormatException e) {
                     return 0.0;
                 }
