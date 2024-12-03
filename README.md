@@ -1,11 +1,5 @@
 # EDUCANTROL
 
-# Equipo de desarrollo
-+ Kevin Armando Rivera Henríquez.
-+ Katya Michelle Asencio Berna. 
-+
-+
-
 ## Descripción
 
 EduCantrol es un sistema de gestión educativa diseñado para optimizar la administración de un centro educativo. Con EduCantrol se permite gestionar estudiantes, profesores, asignaturas, períodos académicos y horarios, facilitando la creación de expedientes académicos, los pagos y la programación de clases y materias. Está desarrollado utilizando Vaadin para la interfaz de usuario, junto con Spring Boot, JPA y Maven en el backend y la persistencia de datos.
@@ -43,8 +37,8 @@ IDE (NetBeans, IntelliJ, Eclipse)
 + Horario: Asignar horarios a las materias de acuerdo con el período, día, y profesor.
 + Pago: Para realizar procesos de pago tanto de estudiantes como de profesores
 + Clase: permite crear, editar y eliminar las clases.
-+ Expediente Academico: Permite la elaboración de un expediente académico así como de su actualización.
-+ Evaluación: Registra las evaluaciones, las edita o elimina para posteriormente manipularlas en el Expediente Academico
++ Grupo: Para crear un grupo,asignar la cantidad de integrantes y asignar estudiantes a dicho grupo
++ Asistencia: nos permite gestionar la asistencia del alumnado 
 
 ## Estructura del Proyecto
 
@@ -53,5 +47,9 @@ src/main/resources: Incluye el archivo de configuración application.properties 
 docs/: Documentación adicional, como el manual del usuario y el diagrama de arquitectura del sistema.
 
 
+## Integrantes
 
-
+Katya Michelle Asencio Bernal – AB23007
+Ángel Josué Cortez Zaldaña – CZ23002
+José Daniel Mendez Sanchez – MS19059
+Kevin Armando Rivera Henríquez – RH16042
