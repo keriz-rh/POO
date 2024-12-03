@@ -26,6 +26,21 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import com.vaadin.flow.component.progressbar.ProgressBar;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
+import org.apache.commons.io.IOUtils;
+
+import com.vaadin.flow.component.UI;
+
 @PageTitle("Educantrol - Profesores")
 @Route(value = "profesor-form", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
@@ -46,12 +61,30 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
     // Grid principal de profesores
     private final Grid<Profesor2> profesoresGrid = new Grid<>(Profesor2.class, false);
 
-    // Nuevos botones para métodos personalizados
+    // Componentes para importación de Excel
+    private final Upload subirArchivo;
+    private final ProgressBar barraProgreso;
+    private final MemoryBuffer buffer;
+    private Thread hiloImportacion;
+    private final AtomicBoolean importacionEnProceso = new AtomicBoolean(false);
+    private final Button btnIniciarImportacion;
+    private InputStream archivoSeleccionado;
+
+    //Botones para métodos personalizados
     private final Button btnFiltrarPorEspecialidad = new Button("Filtrar por Especialidad");
 
     public ProfesorFormView(ProfesorController controller) {
         this.controller = controller;
         
+        // Inicializar componentes
+        this.buffer = new MemoryBuffer();
+        this.subirArchivo = new Upload(buffer);
+        this.barraProgreso = new ProgressBar();
+        this.btnIniciarImportacion = new Button("Importar Archivo");
+
+        btnIniciarImportacion.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnIniciarImportacion.setEnabled(false);
+
         VerticalLayout layoutColumn2 = new VerticalLayout();
         H3 h3 = new H3();
         FormLayout formLayout2Col = new FormLayout();
@@ -78,6 +111,16 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
         layoutRow.add(buttonPrimary);
         layoutRow.add(buttonSecondary);
         layoutRow.add(btnFiltrarPorEspecialidad);
+
+        // Componentes de importación
+        HorizontalLayout importLayout = new HorizontalLayout();
+        importLayout.setAlignItems(Alignment.BASELINE);
+        importLayout.setWidthFull();
+        importLayout.add(subirArchivo, btnIniciarImportacion);
+        layoutColumn2.add(importLayout);
+        layoutColumn2.add(barraProgreso);
+
+        configureImportComponents();
         
         getContent().add(layoutColumn2);
         
@@ -123,6 +166,37 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
         cancel.setWidth("min-content");
     }
 
+    private void configureImportComponents() {
+        barraProgreso.setWidth("100%");
+        barraProgreso.setVisible(false);
+        
+        subirArchivo.setAcceptedFileTypes(".xlsx", ".xls");
+        subirArchivo.setMaxFiles(1);
+        
+        subirArchivo.addSucceededListener(event -> {
+            String fileName = event.getFileName();
+            archivoSeleccionado = buffer.getInputStream();
+            btnIniciarImportacion.setEnabled(true);
+            Notification.show("Archivo seleccionado: " + fileName);
+        });
+        
+        subirArchivo.addFailedListener(event -> {
+            Notification.show("Error al subir el archivo: " + event.getReason());
+            limpiarImportacion();
+        });
+    
+        btnIniciarImportacion.addClickListener(event -> {
+            if (archivoSeleccionado != null) {
+                barraProgreso.setVisible(true);
+                btnIniciarImportacion.setEnabled(false);
+                subirArchivo.setVisible(false); // En lugar de setEnabled, usamos setVisible
+                iniciarImportacionExcel(archivoSeleccionado);
+            } else {
+                Notification.show("Por favor, seleccione un archivo primero");
+            }
+        });
+    }
+
     private void createGrid() {
         //profesoresGrid.addColumn(Profesor2::getId).setHeader("CÓDIGO").setSortable(true);
         profesoresGrid.addColumn(Profesor2::getNombre).setHeader("Nombre").setSortable(true);
@@ -145,6 +219,127 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
         
         getContent().add(profesoresGrid);
         refreshGrid();
+    }
+
+    private void iniciarImportacionExcel(InputStream inputStream) {
+        if (importacionEnProceso.get()) {
+            Notification.show("Ya hay una importación en proceso");
+            return;
+        }
+
+        importacionEnProceso.set(true);
+        
+        hiloImportacion = new Thread(() -> {
+            try {
+                List<Profesor2> profesores = new ArrayList<>();
+                Workbook libroExcel = new XSSFWorkbook(inputStream);
+                Sheet hoja = libroExcel.getSheetAt(0);
+                
+                int totalFilas = hoja.getPhysicalNumberOfRows() - 1;
+                int filaActual = 0;
+                
+                for (Row fila : hoja) {
+                    if (!importacionEnProceso.get()) {
+                        UI.getCurrent().access(() -> {
+                            Notification.show("Importación cancelada");
+                            limpiarImportacion();
+                        });
+                        return;
+                    }
+
+                    if (fila.getRowNum() == 0) continue;
+                    
+                    Profesor2 profesor = new Profesor2();
+                    profesor.setNombre(obtenerValorCeldaComoTexto(fila.getCell(0)));
+                    profesor.setApellido(obtenerValorCeldaComoTexto(fila.getCell(1)));
+                    profesor.setEdad(obtenerValorCeldaComoNumero(fila.getCell(2)));
+                    profesor.setTelefono(obtenerValorCeldaComoTexto(fila.getCell(3)));
+                    profesor.setDireccion(obtenerValorCeldaComoTexto(fila.getCell(4)));
+                    profesor.setEspecialidad(obtenerValorCeldaComoTexto(fila.getCell(5)));
+                    
+                    profesores.add(profesor);
+                    
+                    filaActual++;
+                    final double progreso = (double) filaActual / totalFilas;
+                    
+                    UI.getCurrent().access(() -> actualizarProgreso(progreso));
+                    
+                    Thread.sleep(100);
+                }
+                
+                libroExcel.close();
+                inputStream.close();
+                
+                UI.getCurrent().access(() -> {
+                    try {
+                        profesores.forEach(controller::save);
+                        Notification.show("Importación completada: " + profesores.size() + " profesores importados");
+                        refreshGrid();
+                    } catch (Exception e) {
+                        Notification.show("Error al guardar los profesores: " + e.getMessage());
+                    } finally {
+                        limpiarImportacion();
+                    }
+                });
+                
+            } catch (Exception e) {
+                UI.getCurrent().access(() -> {
+                    Notification.show("Error en la importación: " + e.getMessage(), 
+                                    3000, Notification.Position.MIDDLE);
+                    limpiarImportacion();
+                });
+            }
+        });
+        
+        hiloImportacion.setName("ImportacionExcel-" + System.currentTimeMillis());
+        hiloImportacion.start();
+    }
+
+
+// En el método limpiarImportacion:
+private void limpiarImportacion() {
+    importacionEnProceso.set(false);
+    barraProgreso.setVisible(false);
+    barraProgreso.setValue(0);
+    btnIniciarImportacion.setEnabled(false);
+    subirArchivo.setVisible(true); 
+    archivoSeleccionado = null;
+    hiloImportacion = null;
+
+}
+
+    private void actualizarProgreso(double progreso) {
+        barraProgreso.setValue(progreso);
+    }
+
+    private String obtenerValorCeldaComoTexto(Cell celda) {
+        if (celda == null) return "";
+        
+        switch (celda.getCellType()) {
+            case STRING:
+                return celda.getStringCellValue();
+            case NUMERIC:
+                return String.valueOf((int) celda.getNumericCellValue());
+            default:
+                return "";
+        }
+    }
+
+    private double obtenerValorCeldaComoNumero(Cell celda) {
+        if (celda == null) return 0.0;
+        
+        switch (celda.getCellType()) {
+            case NUMERIC:
+                return celda.getNumericCellValue();
+            case STRING:
+                try {
+                    return Double.parseDouble(celda.getStringCellValue());
+                } catch (NumberFormatException e) {
+                    return 0.0;
+                }
+            default:
+                return 0.0;
+        }
     }
 
     private void saveProfesor() {
