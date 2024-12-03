@@ -1,5 +1,11 @@
 # EDUCANTROL
 
+# Equipo de desarrollo
++ Kevin Armando Rivera Henríquez.
++
++
++
+
 ## Descripción
 
 EduCantrol es un sistema de gestión educativa diseñado para optimizar la administración de un centro educativo. Con EduCantrol se permite gestionar estudiantes, profesores, asignaturas, períodos académicos y horarios, facilitando la creación de expedientes académicos, los pagos y la programación de clases y materias. Está desarrollado utilizando Vaadin para la interfaz de usuario, junto con Spring Boot, JPA y Maven en el backend y la persistencia de datos.
