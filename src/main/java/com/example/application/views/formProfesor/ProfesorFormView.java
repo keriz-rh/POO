@@ -34,12 +34,10 @@ import com.vaadin.flow.component.progressbar.ProgressBar;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
-import org.apache.commons.io.IOUtils;
+
 
 import com.vaadin.flow.component.UI;
 
@@ -235,6 +233,7 @@ public class ProfesorFormView extends Composite<VerticalLayout> {
         hiloImportacion = new Thread(() -> {
             try {
                 List<Profesor2> profesores = new ArrayList<>();
+                @SuppressWarnings("resource")
                 Workbook libroExcel = new XSSFWorkbook(inputStream);
                 Sheet hoja = libroExcel.getSheetAt(0);
                 

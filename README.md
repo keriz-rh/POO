@@ -2,7 +2,7 @@
 
 # Equipo de desarrollo
 + Kevin Armando Rivera Henríquez.
-+
++ Katya Michelle Asencio Berna. 
 +
 +
 
