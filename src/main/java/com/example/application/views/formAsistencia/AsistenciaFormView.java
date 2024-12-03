@@ -22,6 +22,7 @@ import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamResource;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -29,9 +30,23 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 
 @PageTitle("Educantrol - Asistencia")
 @Route(value = "Asistencia", layout = MainLayout.class)
@@ -46,6 +61,7 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
     private RadioButtonGroup<String> estadoRadioGroup;
     private Button guardarButton;
     private Button buscarButton;  // Botón para buscar asistencia por carnet
+    private Button exportarPdfButton;
     private TextField buscarCarnetField;  // Campo para ingresar el número de carnet
     private Grid<Asistencia> grid;
 
@@ -64,6 +80,7 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
         guardarButton = new Button("Guardar");
         buscarCarnetField = new TextField("Buscar por Carnet");
         buscarButton = new Button("Buscar");
+        exportarPdfButton = new Button("Exportar a PDF");
 
         grid = new Grid<>();
 
@@ -88,6 +105,9 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
 
         // Configurar el botón de búsqueda
         buscarButton.addClickListener(event -> buscarAsistenciasPorCarnet());
+
+        //Configurar el botón de exportar PDF
+        exportarPdfButton.addClickListener(event -> exportarAsistenciaAPdf());
 
         // Configuración del Layout
         configurarLayout();
@@ -128,7 +148,7 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
         // Layout de búsqueda
         HorizontalLayout searchLayout = new HorizontalLayout();
         searchLayout.setAlignItems(Alignment.BASELINE);
-        searchLayout.add(buscarCarnetField, buscarButton);
+        searchLayout.add(buscarCarnetField, buscarButton, exportarPdfButton);
 
         // Agregar todo al layout principal
         layoutColumn2.add(
@@ -224,6 +244,109 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
             notification.open();
         }
     }
+
+    private void exportarAsistenciaAPdf() {
+        // Capturar la referencia de UI actual antes de iniciar el hilo
+        UI ui = UI.getCurrent();
+
+        Notification notificationInicio = new Notification("Generando PDF...");
+        notificationInicio.setDuration(2000);
+        notificationInicio.open();
+
+        // Crear un nuevo hilo para la generación del PDF
+        Thread pdfThread = new Thread(() -> {
+            try {
+                // Se crea el archivo en la raíz del proyecto
+                String fileName = "asistencias_" + LocalDate.now().toString() + ".pdf";
+                File file = new File(fileName);
+                OutputStream outputStream = new FileOutputStream(file);
+    
+                // Creación de documento PDF
+                Document document = new Document();
+                PdfWriter.getInstance(document, outputStream);
+                document.open();
+    
+                Paragraph title = new Paragraph("Reporte de Asistencias");
+                title.setAlignment(Element.ALIGN_CENTER);
+                document.add(title);
+                document.add(new Paragraph("\n"));
+    
+                PdfPTable table = new PdfPTable(5);
+                table.setWidthPercentage(100);
+    
+                table.addCell("Estudiante");
+                table.addCell("Grupo");
+                table.addCell("Periodo");
+                table.addCell("Fecha");
+                table.addCell("Estado");
+    
+                // Obtiene los records de asistencia
+                List<Asistencia> asistencias = asistenciaRepository.findAll();
+    
+                for (Asistencia asistencia : asistencias) {
+                    // Añade el estudiante
+                    table.addCell(asistencia.getEstudiante() != null ? 
+                        asistencia.getEstudiante().getNombre() + " " + asistencia.getEstudiante().getApellido() : 
+                        "No disponible");
+    
+                    // Añade el grupo
+                    table.addCell(asistencia.getGrupo() != null ? 
+                        asistencia.getGrupo().getNombre() : 
+                        "No disponible");
+    
+                    // Añade el periodo
+                    table.addCell(asistencia.getPeriodo() != null ? 
+                        asistencia.getPeriodo().getNombre() : 
+                        "No disponible");
+    
+                    // Añade la fecha
+                    table.addCell(asistencia.getFecha().toString());
+    
+                    // Añade el estado de la asistencia
+                    table.addCell(asistencia.isPresente() ? "Presente" : "Ausente");
+                }
+    
+                document.add(table);
+                document.close();
+                outputStream.close();
+    
+                
+            // Usar la referencia de UI capturada
+            ui.access(() -> {
+                try {
+                    // Mostrar notificación de éxito
+                    Notification notificationExito = new Notification(
+                        "PDF generado exitosamente", 
+                        3000, 
+                        Notification.Position.BOTTOM_START
+                    );
+                    notificationExito.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    notificationExito.open();
+
+                    // Abrir el PDF
+                    String filePath = file.getAbsolutePath();
+                    String fileUrl = "file:///" + filePath.replace("\\", "/");
+                    ui.getPage().open(fileUrl, "_blank");
+                } catch (Exception e) {
+                    Notification.show("Error al abrir el PDF: " + e.getMessage());
+                }
+            });
+
+        } catch (Exception e) {
+            ui.access(() -> {
+                Notification notificationError = new Notification(
+                    "Error al generar el PDF: " + e.getMessage(),
+                    3000,
+                    Notification.Position.BOTTOM_START
+                );
+                notificationError.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notificationError.open();
+            });
+        }
+    });
+
+    pdfThread.start();
+}
 
     private void limpiarFormulario() {
         estudianteComboBox.clear();
