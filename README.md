@@ -49,7 +49,7 @@ docs/: Documentación adicional, como el manual del usuario y el diagrama de arq
 
 ## Integrantes
 
-Katya Michelle Asencio Bernal – AB23007
-Ángel Josué Cortez Zaldaña – CZ23002
-José Daniel Mendez Sanchez – MS19059
-Kevin Armando Rivera Henríquez – RH16042
++ Katya Michelle Asencio Bernal – AB23007
++ Ángel Josué Cortez Zaldaña – CZ23002
++ José Daniel Mendez Sanchez – MS19059
++ Kevin Armando Rivera Henríquez – RH16042
