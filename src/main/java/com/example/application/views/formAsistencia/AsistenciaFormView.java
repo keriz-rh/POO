@@ -25,22 +25,25 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamResource;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.UI;
 
-
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.apache.commons.io.output.ByteArrayOutputStream;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
@@ -258,7 +261,7 @@ public class AsistenciaFormView extends Composite<VerticalLayout> {
         confirmDialog.setHeaderTitle("Confirmación de edición");
     
         // Mensaje dentro del diálogo
-        @SuppressWarnings("deprecation")
+        @SuppressWarnings({ "deprecation",})
         Label mensaje = new Label("¿Estás seguro de que deseas editar esta asistencia?");
         confirmDialog.add(mensaje);
     
@@ -384,17 +387,26 @@ private void borrarAsistencia(Asistencia asistencia) {
     private void exportarAsistenciaAPdf() {
         // Capturar la referencia de UI actual antes de iniciar el hilo
         UI ui = UI.getCurrent();
-
+    
         Notification notificationInicio = new Notification("Generando PDF...");
         notificationInicio.setDuration(2000);
         notificationInicio.open();
-
+    
         // Crear un nuevo hilo para la generación del PDF
         Thread pdfThread = new Thread(() -> {
             try {
-                // Se crea el archivo en la raíz del proyecto
+                // Obtener la ruta del directorio de descargas del usuario
+                String userHome = System.getProperty("user.home");
+                String downloadsPath = userHome + "/Downloads"; // Esto funciona en la mayoría de los sistemas operativos
+                File downloadDir = new File(downloadsPath);
+    
+                if (!downloadDir.exists()) {
+                    downloadDir.mkdirs();  // Crear el directorio si no existe
+                }
+    
+                // Crear el archivo PDF en el directorio de descargas
                 String fileName = "asistencias_" + LocalDate.now().toString() + ".pdf";
-                File file = new File(fileName);
+                File file = new File(downloadsPath, fileName);
                 OutputStream outputStream = new FileOutputStream(file);
     
                 // Creación de documento PDF
@@ -416,29 +428,24 @@ private void borrarAsistencia(Asistencia asistencia) {
                 table.addCell("Fecha");
                 table.addCell("Estado");
     
-                // Obtiene los records de asistencia
+                // Obtiene los registros de asistencia
                 List<Asistencia> asistencias = asistenciaRepository.findAll();
     
                 for (Asistencia asistencia : asistencias) {
-                    // Añade el estudiante
-                    table.addCell(asistencia.getEstudiante() != null ? 
-                        asistencia.getEstudiante().getNombre() + " " + asistencia.getEstudiante().getApellido() : 
-                        "No disponible");
+                    table.addCell(asistencia.getEstudiante() != null 
+                        ? asistencia.getEstudiante().getNombre() + " " + asistencia.getEstudiante().getApellido() 
+                        : "No disponible");
     
-                    // Añade el grupo
-                    table.addCell(asistencia.getGrupo() != null ? 
-                        asistencia.getGrupo().getNombre() : 
-                        "No disponible");
+                    table.addCell(asistencia.getGrupo() != null 
+                        ? asistencia.getGrupo().getNombre() 
+                        : "No disponible");
     
-                    // Añade el periodo
-                    table.addCell(asistencia.getPeriodo() != null ? 
-                        asistencia.getPeriodo().getNombre() : 
-                        "No disponible");
+                    table.addCell(asistencia.getPeriodo() != null 
+                        ? asistencia.getPeriodo().getNombre() 
+                        : "No disponible");
     
-                    // Añade la fecha
                     table.addCell(asistencia.getFecha().toString());
     
-                    // Añade el estado de la asistencia
                     table.addCell(asistencia.isPresente() ? "Presente" : "Ausente");
                 }
     
@@ -446,43 +453,45 @@ private void borrarAsistencia(Asistencia asistencia) {
                 document.close();
                 outputStream.close();
     
-                
-            // Usar la referencia de UI capturada
-            ui.access(() -> {
-                try {
-                    // Mostrar notificación de éxito
-                    Notification notificationExito = new Notification(
-                        "PDF generado exitosamente", 
-                        3000, 
+                // Usar la referencia de UI capturada
+                ui.access(() -> {
+                    try {
+                        // Mostrar notificación de éxito
+                        Notification notificationExito = new Notification(
+                            "PDF generado exitosamente", 
+                            3000, 
+                            Notification.Position.BOTTOM_START
+                        );
+                        notificationExito.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                        notificationExito.open();
+    
+                        // Abrir el PDF
+                        String filePath = file.getAbsolutePath();
+                        String fileUrl = "file:///" + filePath.replace("\\", "/");
+                        ui.getPage().open(fileUrl, "_blank");
+                    } catch (Exception e) {
+                        Notification.show("Error al abrir el PDF: " + e.getMessage());
+                    }
+                });
+    
+            } catch (Exception e) {
+                ui.access(() -> {
+                    Notification notificationError = new Notification(
+                        "Error al generar el PDF: " + e.getMessage(),
+                        3000,
                         Notification.Position.BOTTOM_START
                     );
-                    notificationExito.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                    notificationExito.open();
+                    notificationError.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notificationError.open();
+                });
+            }
+        });
+    
+        pdfThread.start();
+    }
+    
+    
 
-                    // Abrir el PDF
-                    String filePath = file.getAbsolutePath();
-                    String fileUrl = "file:///" + filePath.replace("\\", "/");
-                    ui.getPage().open(fileUrl, "_blank");
-                } catch (Exception e) {
-                    Notification.show("Error al abrir el PDF: " + e.getMessage());
-                }
-            });
-
-        } catch (Exception e) {
-            ui.access(() -> {
-                Notification notificationError = new Notification(
-                    "Error al generar el PDF: " + e.getMessage(),
-                    3000,
-                    Notification.Position.BOTTOM_START
-                );
-                notificationError.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                notificationError.open();
-            });
-        }
-    });
-
-    pdfThread.start();
-}
 
     private void limpiarFormulario() {
         estudianteComboBox.clear();
